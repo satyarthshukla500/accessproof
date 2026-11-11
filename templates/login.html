@@ -1,0 +1,12 @@
+{% extends "base.html" %}
+{% block body %}
+<section class="card narrow">
+  <h1>Seller login</h1>
+  <form method="post">
+    <label for="pw" class="small muted">Seller password</label>
+    <input id="pw" type="password" name="password" required autofocus>
+    {% if error %}<p class="danger small">{{ error }}</p>{% endif %}
+    <button class="btn" type="submit">Log in</button>
+  </form>
+</section>
+{% endblock %}

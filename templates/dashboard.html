@@ -1,0 +1,33 @@
+{% extends "base.html" %}
+{% block title %}Dashboard · AccessProof{% endblock %}
+{% block head %}
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/ag-grid-community@32.3.3/styles/ag-grid.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/ag-grid-community@32.3.3/styles/ag-theme-quartz.css">
+<script src="https://cdn.jsdelivr.net/npm/ag-grid-community@32.3.3/dist/ag-grid-community.min.js" defer></script>
+<script src="{{ url_for('static', filename='dashboard.js') }}" defer></script>
+{% endblock %}
+{% block body %}
+<div id="app" data-csrf="{{ csrf }}">
+  <div class="stats">
+    <div class="card"><div class="muted small">Disputes deflected</div><div class="stat" id="s-deflected">0</div></div>
+    <div class="card"><div class="muted small">Est. fees avoided</div><div class="stat" id="s-fees">$0</div><div class="muted small">est. at US standard dispute fee ($15)</div></div>
+    <div class="card"><div class="muted small">Evidence packs filed</div><div class="stat" id="s-filed">0</div></div>
+  </div>
+  <div class="tabs" role="tablist">
+    <button class="tab on" id="tab-orders">Orders</button>
+    <button class="tab" id="tab-ledger">Access ledger</button>
+    <button class="tab" id="tab-help">Help requests</button>
+    <button class="tab" id="tab-disputes">Disputes</button>
+    <span style="flex:1"></span>
+    <button class="btn ghost small" id="sync">Sync disputes</button>
+    <button class="btn ghost small" id="sample">Load sample dispute (not from PayPal)</button>
+    <button class="btn ghost small" id="sample-snad">Sample SNAD dispute</button>
+    <form method="post" action="/logout" style="margin:0"><input type="hidden" name="csrf" value="{{ csrf }}"><button class="btn ghost small" type="submit">Log out</button></form>
+  </div>
+  <p class="status" id="status" role="status"></p>
+  <div class="panel on" id="panel-orders"><div id="grid-orders" class="grid ag-theme-quartz"></div></div>
+  <div class="panel" id="panel-ledger"><div id="grid-ledger" class="grid ag-theme-quartz"></div></div>
+  <div class="panel" id="panel-help"><div id="grid-help" class="grid ag-theme-quartz"></div></div>
+  <div class="panel" id="panel-disputes"><div id="grid-disputes" class="grid ag-theme-quartz"></div></div>
+</div>
+{% endblock %}

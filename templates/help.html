@@ -1,0 +1,29 @@
+{% extends "base.html" %}
+{% block body %}
+<section class="card">
+  <h1>Problem with your order?</h1>
+  <p class="muted small">Order <code>{{ order.id }}</code>.{% if not result %} Tell us what went wrong. Our assistant checks your access record first.{% endif %}</p>
+  {% if not result %}
+  <form method="post" id="help-form">
+    <label for="msg" class="small muted">Your message</label>
+    <textarea id="msg" name="message" maxlength="1000" rows="4" required placeholder="For example: I never got my download"></textarea>
+    <button class="btn" type="submit">Ask for help</button>
+  </form>
+  {% else %}
+  <div class="reply" id="reply">
+    <p>{{ result.reply }}</p>
+    {% if result.fallback %}<p class="small muted">The assistant is busy, so this is an automatic answer from your access record.</p>{% endif %}
+    {% if result.events %}
+    <p class="small muted">Your access record</p>
+    <ul class="list">{% for e in result.events %}<li>{{ e.event|eventname }} · {{ e.ts|utc }}</li>{% endfor %}</ul>
+    {% endif %}
+    {% if result.link %}<p><a class="btn" href="{{ result.link }}">Download again</a></p>{% endif %}
+    {% if result.refund %}<p class="warn">We passed a refund request to the seller. A refund only happens if the seller approves it.</p>{% endif %}
+    {% if result.flagged and not result.fallback %}<p class="small muted">This message was flagged for the seller to review.</p>{% endif %}
+  </div>
+  {% if result.outcome in ('resent', 'open') %}
+  <form method="post" action="/order/{{ order.id }}/help/{{ result.id }}/solved"><input type="hidden" name="token" value="{{ token }}"><button class="btn ghost" type="submit">That solved it</button></form>
+  {% endif %}
+  {% endif %}
+</section>
+{% endblock %}

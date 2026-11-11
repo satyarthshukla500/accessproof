@@ -1,0 +1,17 @@
+{% extends "base.html" %}
+{% block body %}
+<section class="card product">
+  <h1>{{ product.title }}</h1>
+  <p class="muted">A 6 page PDF guide to set up Notion for clients, projects and invoices.</p>
+  <ul class="list">
+    <li>Clients, projects and invoice database layouts</li>
+    <li>A weekly review checklist</li>
+    <li>Instant signed download link, valid for 7 days</li>
+  </ul>
+  <p class="price">${{ product.price }} <span class="muted small">USD</span></p>
+  <div id="paypal-button"></div>
+  <p id="msg" class="small danger"></p>
+  <p class="muted small">Payments run in the PayPal sandbox. No real money moves.</p>
+</section>
+{% endblock %}
+{% block head %}<script src="{{ url_for('static', filename='store.js') }}" defer></script>{% endblock %}

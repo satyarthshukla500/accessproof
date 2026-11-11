@@ -1,0 +1,11 @@
+{% extends "base.html" %}
+{% block body %}
+<section class="card">
+  <h1>Thanks, your payment went through</h1>
+  <p class="muted">{{ product.title }} · ${{ order.amount }} {{ order.currency }}</p>
+  <p class="small">Order <code>{{ order.id }}</code><br>PayPal capture <code>{{ order.capture_id }}</code></p>
+  <p><a class="btn" id="download" href="{{ link }}">Download your file</a></p>
+  <p class="muted small">This link is signed and expires in 7 days. We record when it is opened and used.</p>
+  <p><a href="/order/{{ order.id }}/help">Problem with your order?</a></p>
+</section>
+{% endblock %}

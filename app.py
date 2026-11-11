@@ -101,6 +101,11 @@ def store():
     return render_template("store.html", product=PRODUCT, chain=ledger.latest_chain())
 
 
+@app.get("/healthz")
+def healthz():
+    return "ok"
+
+
 @app.get("/config")
 def config():
     return jsonify(client_id=os.environ["PAYPAL_CLIENT_ID"])
@@ -146,13 +151,13 @@ def capture(order_id):
                      (order_id, cap["id"], email, cap["amount"]["value"], cap["amount"]["currency_code"], PRODUCT["id"]))
     if new:  # only the request that inserted the order logs the purchase, so a double capture cannot repeat it
         log_event(order_id, "PURCHASE_CAPTURED", {"capture_id": cap["id"], "amount": cap["amount"]["value"]})
-    return jsonify(ok=True, redirect="/success/" + order_id)
+    return jsonify(ok=True, redirect="/success/%s?t=%s" % (order_id, sign(order_id)))
 
 
 def buyer_order(order_id):
-    """A real order inside the link lifetime; seed rows, sample rows and stale orders have no buyer pages."""
+    """A real order inside the link lifetime, reached with its signed token (?t=); seed rows, sample rows and guessed ids have no buyer pages."""
     order = db.one("SELECT * FROM orders WHERE id=? AND source='real' AND created_at > datetime('now', ?)", (order_id, "-%d day" % TOKEN_DAYS))
-    if not order:
+    if not order or check(request.values.get("t", "")) != order_id:
         abort(404)
     return order
 
@@ -163,7 +168,7 @@ def success(order_id):
     if not any(r["event"] == "DELIVERY_EMAIL_LOGGED" for r in ledger.rows(order_id)):
         log_event(order_id, "DELIVERY_EMAIL_LOGGED", {"to": order["payer_email"], "note": "download link issued; no email service is connected"})
     rows = ledger.rows(order_id)
-    return render_template("success.html", order=order, product=PRODUCT, link="/d/" + sign(order_id),
+    return render_template("success.html", order=order, product=PRODUCT, token=sign(order_id), link="/d/" + sign(order_id),
                            chain=ledger.blocks(rows), next_label=ledger.next_label(rows))
 
 

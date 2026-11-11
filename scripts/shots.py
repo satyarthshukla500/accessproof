@@ -1,9 +1,13 @@
 """Screenshots every page at 1280x800, 768x1024 and 390x844, logs console errors and failed requests,
 and checks that nothing overlaps, is clipped sideways or makes the page scroll horizontally.
 Usage: python scripts/shots.py <order id>   (set SHOT_HELP=1 to also send one chat message; needs the app running)"""
+import base64
+import hashlib
+import hmac
 import json
 import os
 import sys
+import time
 
 from dotenv import load_dotenv
 from playwright.sync_api import sync_playwright
@@ -88,10 +92,17 @@ def ask(p):
     p.wait_for_timeout(800)
 
 
+def token(order_id):
+    """The same signed token the app puts in a buyer's links (the buyer pages need it)."""
+    payload = base64.urlsafe_b64encode(("%s|%d" % (order_id, time.time() + 86400)).encode()).decode()
+    return payload + "." + hmac.new(os.environ["APP_SECRET"].encode(), payload.encode(), hashlib.sha256).hexdigest()
+
+
 def pages(order_id):
-    out = [("store", "/", store), ("success", "/success/" + order_id, None), ("chat", "/order/%s/help" % order_id, None), ("login", "/login", None)]
+    t = token(order_id)
+    out = [("store", "/", store), ("success", "/success/%s?t=%s" % (order_id, t), None), ("chat", "/order/%s/help?t=%s" % (order_id, t), None), ("login", "/login", None)]
     if os.environ.get("SHOT_HELP"):
-        out.append(("chat-reply", "/order/%s/help" % order_id, ask))
+        out.append(("chat-reply", "/order/%s/help?t=%s" % (order_id, t), ask))
     if os.environ.get("SELLER_PASSWORD") and not os.environ.get("NO_SELLER"):
         out += [("dash-" + n, "/login", dash(n)) for n in ("overview", "orders", "ledger", "help", "disputes")] + [("dash-drawer", "/login", drawer)]
     return out

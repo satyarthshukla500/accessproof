@@ -170,6 +170,7 @@ function renderLists() {
   });
 }
 
+let view = "overview";
 function show(name) {
   if (!VIEWS[name]) name = "overview";
   document.querySelectorAll(".nav a").forEach((a) => a.classList.toggle("on", a.id === "tab-" + name));
@@ -177,6 +178,9 @@ function show(name) {
   $("eyebrow").textContent = VIEWS[name][0];
   $("title").textContent = VIEWS[name][1];
   $("actions").hidden = !["overview", "disputes"].includes(name);
+  $("tools").hidden = name === "overview";
+  $("qf").value = "";
+  view = name;
   document.querySelector(".mobile-only").hidden = name !== "overview";
   if (name !== "overview" && data) Grids.make(name);
   if (location.hash !== "#" + name) history.replaceState(null, "", "#" + name);
@@ -264,6 +268,8 @@ async function load() {
 document.querySelectorAll(".nav a").forEach((a) => a.addEventListener("click", (e) => { e.preventDefault(); show(a.id.slice(4)); }));
 $("scrim").addEventListener("click", closeDrawer);
 document.addEventListener("keydown", (e) => { if (e.key === "Escape" && openId) closeDrawer(); });
+$("qf").addEventListener("input", (e) => Grids.filter(view, e.target.value));
+$("csv").addEventListener("click", () => Grids.csv(view));
 $("sync").addEventListener("click", (e) => act("/seller/disputes/sync", e.currentTarget));
 $("sample").addEventListener("click", (e) => act("/seller/disputes/sample", e.currentTarget));
 $("sample-snad").addEventListener("click", (e) => act("/seller/disputes/sample?reason=snad", e.currentTarget));

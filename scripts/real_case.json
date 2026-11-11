@@ -1,0 +1,142 @@
+{
+ "order": {
+  "id": "17G695183J994980F",
+  "capture_id": "73G51980JU610711E",
+  "payer_email": "sandbox-buyer@example.invalid",
+  "amount": "29.00",
+  "currency": "USD",
+  "product": "notion-kit",
+  "created_at": "2026-11-11 14:44:16"
+ },
+ "ledger": [
+  {
+   "event": "PURCHASE_CAPTURED",
+   "ts": "2026-11-11T14:44:16+00:00",
+   "ip": "127.0.0.1",
+   "ua": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/158.0.0.0 Safari/537.36",
+   "detail": {
+    "amount": "29.00",
+    "capture_id": "73G51980JU610711E"
+   }
+  },
+  {
+   "event": "DELIVERY_EMAIL_LOGGED",
+   "ts": "2026-11-11T14:44:16+00:00",
+   "ip": "127.0.0.1",
+   "ua": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/158.0.0.0 Safari/537.36",
+   "detail": {
+    "to": "sandbox-buyer@example.invalid"
+   }
+  },
+  {
+   "event": "LINK_OPENED",
+   "ts": "2026-11-11T14:44:16+00:00",
+   "ip": "127.0.0.1",
+   "ua": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/158.0.0.0 Safari/537.36",
+   "detail": {}
+  },
+  {
+   "event": "FILE_DOWNLOADED",
+   "ts": "2026-11-11T14:44:16+00:00",
+   "ip": "127.0.0.1",
+   "ua": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/158.0.0.0 Safari/537.36",
+   "detail": {}
+  },
+  {
+   "event": "LINK_RESENT",
+   "ts": "2026-11-11T14:47:03+00:00",
+   "ip": "127.0.0.1",
+   "ua": "curl/8.12.1",
+   "detail": {}
+  },
+  {
+   "event": "LINK_RESENT",
+   "ts": "2026-11-11T14:48:13+00:00",
+   "ip": "127.0.0.1",
+   "ua": "curl/8.12.1",
+   "detail": {}
+  },
+  {
+   "event": "LINK_RESENT",
+   "ts": "2026-11-11T14:49:00+00:00",
+   "ip": "127.0.0.1",
+   "ua": "curl/8.12.1",
+   "detail": {}
+  },
+  {
+   "event": "LINK_RESENT",
+   "ts": "2026-11-11T14:49:33+00:00",
+   "ip": "127.0.0.1",
+   "ua": "curl/8.12.1",
+   "detail": {}
+  },
+  {
+   "event": "LINK_RESENT",
+   "ts": "2026-11-11T14:50:06+00:00",
+   "ip": "127.0.0.1",
+   "ua": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/158.0.8127.18 Safari/537.36",
+   "detail": {}
+  },
+  {
+   "event": "LINK_RESENT",
+   "ts": "2026-11-11T14:50:13+00:00",
+   "ip": "127.0.0.1",
+   "ua": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/158.0.8127.18 Safari/537.36",
+   "detail": {}
+  },
+  {
+   "event": "LINK_RESENT",
+   "ts": "2026-11-11T15:46:06+00:00",
+   "ip": "127.0.0.1",
+   "ua": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/158.0.8127.18 Safari/537.36",
+   "detail": {}
+  },
+  {
+   "event": "LINK_RESENT",
+   "ts": "2026-11-11T15:46:22+00:00",
+   "ip": "127.0.0.1",
+   "ua": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/158.0.8127.18 Safari/537.36",
+   "detail": {}
+  },
+  {
+   "event": "EVIDENCE_SUBMITTED",
+   "ts": "2026-11-11T15:51:11+00:00",
+   "ip": "",
+   "ua": "",
+   "detail": {
+    "dispute_id": "PP-R-FBZ-10198941"
+   }
+  },
+  {
+   "event": "LINK_RESENT",
+   "ts": "2026-11-11T16:23:30+00:00",
+   "ip": "127.0.0.1",
+   "ua": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/158.0.8127.18 Safari/537.36",
+   "detail": {}
+  },
+  {
+   "event": "LINK_RESENT",
+   "ts": "2026-11-11T16:23:44+00:00",
+   "ip": "127.0.0.1",
+   "ua": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/158.0.8127.18 Safari/537.36",
+   "detail": {}
+  }
+ ],
+ "dispute": {
+  "id": "PP-R-FBZ-10198941",
+  "order_id": "17G695183J994980F",
+  "capture_id": "73G51980JU610711E",
+  "reason": "MERCHANDISE_OR_SERVICE_NOT_RECEIVED",
+  "status": "WAITING_FOR_BUYER_RESPONSE",
+  "stage": "INQUIRY",
+  "amount": "29.00",
+  "currency": "USD",
+  "raw": "{\"dispute_id\": \"PP-R-FBZ-10198941\", \"create_time\": \"2026-11-11T15:14:46.833Z\", \"update_time\": \"2026-11-11T15:51:19.811Z\", \"disputed_transactions\": [{\"buyer_transaction_id\": \"66U96427ST363651D\", \"seller_transaction_id\": \"73G51980JU610711E\", \"create_time\": \"2026-11-11T14:44:15.000Z\", \"transaction_status\": \"HELD\", \"gross_amount\": {\"currency_code\": \"USD\", \"value\": \"29.00\"}, \"buyer\": {\"email\": \"sandbox-buyer@example.invalid\", \"payer_id\": \"J2V44APFNC73Q\", \"name\": \"John Doe\"}, \"seller\": {\"email\": \"sandbox-buyer@example.invalid\", \"merchant_id\": \"N5UN2CLSXPAL4\", \"name\": \"Test Store\"}, \"items\": [{\"item_name\": \"Notion Freelancer Starter Kit\", \"item_description\": \"Notion Freelancer Starter Kit\", \"item_quantity\": \"1\", \"reason\": \"MERCHANDISE_OR_SERVICE_NOT_RECEIVED\", \"item_type\": \"DIGITAL_DOWNLOAD\"}], \"seller_protection_eligible\": true, \"seller_protection_type\": \"EXPANDED_SELLER_PROTECTION\"}], \"reason\": \"MERCHANDISE_OR_SERVICE_NOT_RECEIVED\", \"status\": \"WAITING_FOR_BUYER_RESPONSE\", \"dispute_amount\": {\"currency_code\": \"USD\", \"value\": \"29.00\"}, \"dispute_state\": \"REQUIRED_OTHER_PARTY_ACTION\", \"fund_movements\": [{\"party\": \"SELLER\", \"amount\": {\"currency_code\": \"USD\", \"value\": \"27.50\"}, \"initiated_time\": \"2026-11-11T15:17:55.000Z\", \"type\": \"DEBIT\", \"reason\": \"HOLD_PLACED\"}], \"dispute_life_cycle_stage\": \"INQUIRY\", \"dispute_channel\": \"INTERNAL\", \"messages\": [{\"posted_by\": \"BUYER\", \"time_posted\": \"2026-11-11T15:14:46.833Z\", \"content\": \"I paid for the digital guide but never received or opened the file. Please help.\"}], \"extensions\": {\"buyer_contacted_time\": \"2026-11-11T15:14:46.113Z\"}, \"evidences\": [{\"evidence_type\": \"CREATE\", \"notes\": \"I paid for the digital guide but never received or opened the file. Please help.\", \"source\": \"SUBMITTED_BY_BUYER\", \"date\": \"2026-11-11T15:14:46.833Z\", \"dispute_life_cycle_stage\": \"INQUIRY\"}, {\"evidence_type\": \"PROOF_OF_FULFILLMENT\", \"documents\": [{\"name\": \"evidence.pdf\", \"url\": \"https://api-m.sandbox.paypal.com/v2/content/documents/DIS-010-11f1-dde7-b71449a0-ac9f-94b14591901d/files/1/download\"}], \"notes\": \"The buyer claims merchandise or service was not received, but the digital goods access ledger proves the purchase was captured, the download link was issued for the buyer's address on file, the link was opened, and the file was successfully downloaded.\", \"source\": \"SUBMITTED_BY_SELLER\", \"date\": \"2026-11-11T15:51:10.779Z\", \"action_info\": {\"action\": \"PROVIDE_EVIDENCE\"}, \"dispute_life_cycle_stage\": \"INQUIRY\"}], \"buyer_response_due_date\": \"2026-12-01T15:14:46.833Z\", \"offer\": {\"buyer_requested_amount\": {\"currency_code\": \"USD\", \"value\": \"29.00\"}}, \"refund_details\": {\"allowed_refund_amount\": {\"currency_code\": \"USD\", \"value\": \"29.00\"}}, \"allowed_response_options\": {\"accept_claim\": {\"accept_claim_types\": [\"REFUND\"]}}, \"links\": [{\"href\": \"https://api-m.sandbox.paypal.com/v1/customer/disputes/PP-R-FBZ-10198941\", \"rel\": \"self\", \"method\": \"GET\", \"encType\": \"application/json\"}, {\"href\": \"https://api-m.sandbox.paypal.com/v1/customer/disputes/PP-R-FBZ-10198941/send-message\", \"rel\": \"send_message\", \"method\": \"POST\", \"encType\": \"application/json\"}, {\"href\": \"https://api-m.sandbox.paypal.com/v1/customer/disputes/PP-R-FBZ-10198941/escalate\", \"rel\": \"escalate\", \"method\": \"POST\", \"encType\": \"application/json\"}, {\"href\": \"https://api-m.sandbox.paypal.com/v1/customer/disputes/PP-R-FBZ-10198941/accept-claim\", \"rel\": \"accept_claim\", \"method\": \"POST\", \"encType\": \"application/json\"}]}",
+  "covered": 1,
+  "recommendation": "SUBMIT_EVIDENCE",
+  "pack": "{\"covered\": true, \"summary\": \"The buyer claims merchandise or service was not received, but the digital goods access ledger proves the purchase was captured, the download link was issued for the buyer's address on file, the link was opened, and the file was successfully downloaded.\", \"claims\": [{\"text\": \"The purchase was successfully captured.\", \"event_ids\": [1]}, {\"text\": \"The download link was issued for the buyer's address on file.\", \"event_ids\": [2]}, {\"text\": \"The download link was opened by the buyer.\", \"event_ids\": [3]}, {\"text\": \"The digital file was downloaded by the buyer.\", \"event_ids\": [4]}], \"recommendation\": \"SUBMIT_EVIDENCE\"}",
+  "last_result": "Evidence submitted to PayPal",
+  "source": "paypal",
+  "created_at": "2026-11-11 15:48:15"
+ }
+}

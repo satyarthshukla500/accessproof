@@ -86,5 +86,5 @@ const Grids = (() => {
     Object.keys(grids).forEach((name) => { track(name); grids[name].setGridOption("rowData", data[name]); });
   }
 
-  return { make, refresh };
+  return { make, refresh, filter: (n, text) => grids[n] && grids[n].setGridOption("quickFilterText", text), csv: (n) => grids[n] && grids[n].exportDataAsCsv({ fileName: "accessproof-" + n + ".csv" }) };
 })();

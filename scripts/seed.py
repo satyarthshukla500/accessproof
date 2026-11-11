@@ -1,4 +1,5 @@
-"""Adds demo rows marked source=seed. Never touches real rows. `--if-empty` skips when any order exists."""
+"""Adds demo rows marked source=seed and the recorded real sandbox case. Never touches real rows.
+`--if-empty` skips when any order exists; `--real-only` loads just the recorded case."""
 import json
 import os
 import sys
@@ -20,7 +21,23 @@ def iso(t):
     return t.isoformat(timespec="seconds")
 
 
+def load_real_case():
+    """The real sandbox dispute from the author's test run (buyer address scrubbed), so a fresh host shows it. Needs an empty ledger: the pack cites ids 1..N."""
+    case = json.load(open(os.path.join(os.path.dirname(os.path.abspath(__file__)), "real_case.json"), encoding="utf-8"))
+    o, d = case["order"], case["dispute"]
+    if db.one("SELECT id FROM ledger LIMIT 1") or db.one("SELECT id FROM orders WHERE id=?", (o["id"],)):
+        return False
+    db.run("INSERT INTO orders(id,capture_id,payer_email,amount,currency,product,created_at,source) VALUES(?,?,?,?,?,?,?,'real')",
+           (o["id"], o["capture_id"], o["payer_email"], o["amount"], o["currency"], o["product"], o["created_at"]))
+    for r in case["ledger"]:
+        ledger.add(o["id"], r["event"], r["ip"], r["ua"], r["detail"], r["ts"])
+    cols = ("id", "order_id", "capture_id", "reason", "status", "stage", "amount", "currency", "raw", "covered", "recommendation", "pack", "last_result", "source", "created_at")
+    db.run("INSERT INTO disputes(%s) VALUES(%s)" % (",".join(cols), ",".join("?" * len(cols))), tuple(d[c] for c in cols))
+    return True
+
+
 def seed():
+    load_real_case()
     now = datetime.now(timezone.utc)
     for i, email in enumerate(EMAILS, 1):
         oid, t = "SEED-ORDER-%02d" % i, now - timedelta(days=i * 2, hours=i)
@@ -55,7 +72,9 @@ def seed():
 
 if __name__ == "__main__":
     db.init()
-    if "--if-empty" in sys.argv and db.one("SELECT id FROM orders LIMIT 1"):
+    if "--real-only" in sys.argv:
+        print("real case loaded" if load_real_case() else "real case skipped")
+    elif "--if-empty" in sys.argv and db.one("SELECT id FROM orders LIMIT 1"):
         print("not empty, skipped")
     else:
         seed()

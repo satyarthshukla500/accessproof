@@ -310,7 +310,7 @@ def test_logout_revokes_a_copied_cookie(client):
 
 
 def test_login_is_limited_overall_not_only_per_address(client):
-    for _ in range(30):
+    for _ in range(300):
         limits.add("login:all")
     assert client.post("/login", data={"password": "pw-test"}).status_code == 429
 
@@ -323,3 +323,14 @@ def test_second_refund_for_an_order_is_refused(client, monkeypatch):
     second = db.run("INSERT INTO refund_requests(order_id,amount) VALUES('o1','29.00')")
     assert client.post("/seller/refund/%d/approve" % first, headers={"X-CSRF": csrf}).status_code == 200
     assert client.post("/seller/refund/%d/approve" % second, headers={"X-CSRF": csrf}).status_code == 409
+
+
+def test_filing_sends_the_chain_head_to_paypal(client, monkeypatch):
+    sent = []
+    monkeypatch.setattr(paypal, "provide_evidence", lambda *a: sent.append(a))
+    monkeypatch.setattr(paypal, "get_dispute", lambda i: (_ for _ in ()).throw(paypal.PayPalError(500, "x")))
+    csrf = login(client)
+    paypal_dispute([{"rel": "provide-evidence", "href": "x"}])
+    head = ledger.head("o1")
+    assert client.post("/seller/disputes/D9/submit", headers={"X-CSRF": csrf}).status_code == 200
+    assert "Ledger chain head at filing: " + head in sent[0][2]

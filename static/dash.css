@@ -93,3 +93,6 @@ dialog::backdrop { background: rgba(5, 12, 24, .6); } dialog p { margin-bottom: 
 .bar-actions:not(:has(> :not([hidden]))) { display: none; }
 .stat .cap { text-wrap: pretty; } .ev time { white-space: nowrap; color: var(--muted); }
 @media (max-width: 520px) { .stat .eyebrow { letter-spacing: .06em; font-size: 10px; } .nav .lg { display: none; } }
+.qf { height: 36px; width: 200px; padding: 0 12px; border-radius: 10px; border: 1px solid var(--line); background: var(--card); color: var(--ink); font: 500 13px Inter, sans-serif; }
+.qf:focus-visible { outline: 2px solid var(--mint); outline-offset: 2px; }
+@media (max-width: 520px) { .qf { width: 100%; } #tools { width: 100%; } }

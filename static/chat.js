@@ -2,7 +2,8 @@ const chat = document.getElementById("chat");
 const msgs = document.getElementById("msgs");
 const form = document.getElementById("composer");
 const input = document.getElementById("chat-input");
-const base = "/order/" + chat.dataset.order + "/help";
+const root = "/order/" + chat.dataset.order + "/help";
+const base = root + "?t=" + encodeURIComponent(chat.dataset.token);
 
 function el(tag, cls, text) {
   const e = document.createElement(tag);
@@ -39,7 +40,7 @@ function button(label, cls, onclick) {
 }
 
 async function solved(id, box) {
-  const r = await fetch(base + "/" + id + "/solved", { method: "POST", body: new URLSearchParams({ token: chat.dataset.token }) });
+  const r = await fetch(root + "/" + id + "/solved", { method: "POST", body: new URLSearchParams({ token: chat.dataset.token }) });
   box.replaceChildren(el("p", "small muted", r.ok ? "Glad that helped. I've noted it for the seller." : "That request is already closed."));
 }
 

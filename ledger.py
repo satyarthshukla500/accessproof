@@ -46,7 +46,7 @@ def fmt_ts(ts):
     return "%d %s" % (d.day, d.strftime("%b %Y, %H:%M UTC"))
 
 
-SHORT = {"PURCHASE_CAPTURED": "Paid", "DELIVERY_EMAIL_LOGGED": "Link sent", "LINK_OPENED": "Opened", "FILE_DOWNLOADED": "Downloaded",
+SHORT = {"PURCHASE_CAPTURED": "Paid", "DELIVERY_EMAIL_LOGGED": "Link issued", "LINK_OPENED": "Opened", "FILE_DOWNLOADED": "Downloaded",
          "LINK_RESENT": "Re-sent", "REFUND_APPROVED": "Refunded", "EVIDENCE_SUBMITTED": "Evidence sent"}
 FLOW = ["PURCHASE_CAPTURED", "DELIVERY_EMAIL_LOGGED", "LINK_OPENED", "FILE_DOWNLOADED"]
 
@@ -88,6 +88,11 @@ def status_line(rows):
 
 def rows(order_id):
     return db.query("SELECT * FROM ledger WHERE order_id=? ORDER BY id", (order_id,))
+
+
+def head(order_id):
+    """The hash of the newest row: whoever holds a copy can later tell if the chain was rebuilt."""
+    return (rows(order_id) or [{"hash": ZERO}])[-1]["hash"]
 
 
 def verify(order_id):

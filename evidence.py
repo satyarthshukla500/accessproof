@@ -8,6 +8,8 @@ from reportlab.lib.styles import ParagraphStyle, getSampleStyleSheet
 from reportlab.lib.units import inch
 from reportlab.platypus import Paragraph, SimpleDocTemplate, Spacer, Table, TableStyle
 
+from ledger import EVENT_LABELS
+
 STYLES = getSampleStyleSheet()
 SMALL = ParagraphStyle("small", parent=STYLES["BodyText"], fontSize=8, leading=10)
 
@@ -16,6 +18,11 @@ def p(text, style="BodyText"):
     """Paragraph with escaped text; model and buyer text must never be parsed as markup."""
     clean = re.sub(r"[\x00-\x08\x0b\x0c\x0e-\x1f]", "", str(text))
     return Paragraph(escape(clean), SMALL if style == "small" else STYLES[style])
+
+
+def event_cell(event):
+    """The plain-language name first, the stored event key small underneath."""
+    return Paragraph("%s<br/><font size=6 color='#888888'>%s</font>" % (escape(EVENT_LABELS.get(event, event)), escape(event)), SMALL)
 
 
 def header(canvas, doc):
@@ -61,10 +68,12 @@ def build_pdf(dispute, order, rows, pack, chain):
     out += [Spacer(1, 8), p("Access ledger (UTC)", "Heading2")]
     data = [[p(h, "small") for h in ("ID", "Time (UTC)", "Event", "IP", "User agent")]]
     for r in rows:
-        data.append([p(r["id"], "small"), p(r["ts"][:19].replace("T", " "), "small"), p(r["event"], "small"), p(r["ip"], "small"), p(short(r["ua"]), "small")])
+        data.append([p(r["id"], "small"), p(r["ts"][:19].replace("T", " "), "small"), event_cell(r["event"]), p(r["ip"], "small"), p(short(r["ua"]), "small")])
     t = Table(data, colWidths=[0.4 * inch, 1.5 * inch, 1.7 * inch, 1.0 * inch, 2.4 * inch], repeatRows=1)
     t.setStyle(TableStyle([("GRID", (0, 0), (-1, -1), 0.4, colors.lightgrey), ("BACKGROUND", (0, 0), (-1, 0), colors.whitesmoke),
                            ("VALIGN", (0, 0), (-1, -1), "TOP")]))
-    out += [t, Spacer(1, 8), p("Each ledger row stores the hash of the previous row, so changing any row breaks the chain. Chain status: %s. DELIVERY_EMAIL_LOGGED records that the download link was issued for the payer's address on file; no email service is connected." % chain, "small")]
+    head = rows[-1]["hash"] if rows and "hash" in rows[-1].keys() else "none"
+    out += [t, Spacer(1, 8), p("Each ledger row stores the hash of the previous row, so changing any row breaks the chain. Chain status: %s. Chain head (hash of the last row): %s. "
+                               "DELIVERY_EMAIL_LOGGED records that the download link was issued for the payer's address on file; no email service is connected." % (chain, head), "small")]
     doc.build(out, onFirstPage=header, onLaterPages=header)
     return buf.getvalue()

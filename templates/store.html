@@ -10,7 +10,7 @@
     <div class="card chain-card">
       <p class="eyebrow">Live proof chain{% if example %} · example{% endif %}</p>
       {% if example %}
-        {{ proof([{"id": 47, "label": "Paid", "short": "10:02", "when": ""}, {"id": 48, "label": "Link sent", "short": "10:02", "when": ""}, {"id": 49, "label": "Opened", "short": "10:03", "when": ""}, {"id": 50, "label": "Downloaded", "short": "10:03", "when": ""}]) }}
+        {{ proof([{"id": 47, "label": "Paid", "short": "10:02", "when": ""}, {"id": 48, "label": "Link issued", "short": "10:02", "when": ""}, {"id": 49, "label": "Opened", "short": "10:03", "when": ""}, {"id": 50, "label": "Downloaded", "short": "10:03", "when": ""}]) }}
       {% else %}{{ proof(chain) }}{% endif %}
     </div>
   </div>
@@ -26,7 +26,7 @@
     </ul>
     <div id="paypal-button"></div>
     <p id="msg" class="small danger" role="alert"></p>
-    <p class="small muted">Secure sandbox checkout · no real money moves.</p>
+    <p class="small muted">Secure sandbox checkout · no real money moves. We record the time, IP address and browser of each download to prove delivery; it is shared with PayPal only if a dispute is opened.</p>
     <div class="chips"><span class="chip">{{ icon("download") }}Instant download</span><span class="chip">{{ icon("shield") }}Proof recorded</span><span class="chip">{{ icon("chat") }}Help built in</span></div>
   </div>
 </section>

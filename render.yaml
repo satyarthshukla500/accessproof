@@ -2,10 +2,11 @@ services:
   - type: web
     name: accessproof
     runtime: python
+    healthCheckPath: /healthz
     plan: free
     buildCommand: pip install -r requirements.txt
     # seeds demo rows only when the database is empty; one worker keeps the in-memory rate limit honest
-    startCommand: python scripts/seed.py --if-empty && gunicorn app:app --workers 1 --threads 4 --timeout 120
+    startCommand: python scripts/seed.py --if-empty && gunicorn app:app --workers 1 --threads 4 --timeout 60
     envVars:
       - key: PYTHON_VERSION
         value: 3.11.9

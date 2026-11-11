@@ -48,7 +48,7 @@ def login():
     error = ""
     key = "login:" + (request.remote_addr or "")
     if request.method == "POST":
-        if limits.count(key) >= 5 or limits.count("login:all") >= 30:  # failed attempts only, per address and overall
+        if limits.count(key) >= 5 or limits.count("login:all") >= 300:  # failed attempts only, per address and overall
             return render_template("login.html", error="Too many attempts. Try again later."), 429
         wanted = os.environ.get("SELLER_PASSWORD", "")
         if wanted and hmac.compare_digest(request.form.get("password", "").encode(), wanted.encode()):
@@ -168,8 +168,6 @@ def pack(dispute_id):
     if d["pack"]:
         return reply(True, "Evidence pack already built")
     res = assistant.evidence_pack(d, ledger.rows(order["id"]))
-    if res.get("unavailable"):
-        return reply(False, "AI draft unavailable, try again shortly", 503)
     db.run("UPDATE disputes SET pack=?, covered=?, recommendation=? WHERE id=?",
            (json.dumps(res), int(res["covered"]), res["recommendation"], dispute_id))
     return reply(True, "Evidence pack built: %s" % res["recommendation"])
@@ -195,7 +193,8 @@ def submit(dispute_id):
     if not has_link(raw_of(d), "provide_evidence"):
         return reply(False, "PayPal does not accept evidence for this dispute right now", 400)
     try:
-        paypal.provide_evidence(dispute_id, pdf_for(d, order), json.loads(d["pack"])["summary"], requested_type(raw_of(d)))
+        note = "%s Ledger chain head at filing: %s." % (json.loads(d["pack"])["summary"], ledger.head(order["id"]))
+        paypal.provide_evidence(dispute_id, pdf_for(d, order), note, requested_type(raw_of(d)))
     except paypal.PayPalError as e:
         log.exception("provide-evidence failed")
         db.run("UPDATE disputes SET last_result=? WHERE id=?", ("Submit failed: PayPal %s" % e.status, dispute_id))

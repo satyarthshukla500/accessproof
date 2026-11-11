@@ -13,7 +13,7 @@ log = logging.getLogger("accessproof")
 INTENTS = {"NOT_RECEIVED", "CANT_OPEN", "WANTS_REFUND", "NOT_AS_DESCRIBED", "OTHER"}
 ACTIONS = {"RESEND", "OFFER_REFUND", "NONE"}
 RECOMMENDATIONS = {"SUBMIT_EVIDENCE", "MAKE_OFFER", "ACCEPT"}
-INJECTION = re.compile(r"(ignore|disregard|forget|override)\W+(\w+\W+){0,3}(rules|instructions|prompt)|system prompt|refund\W+me|pay\W+me|\$\s?\d{3,}", re.I)
+INJECTION = re.compile(r"(ignore|disregard|forget|override)\W+(\w+\W+){0,3}(rules|instructions|prompt)|system prompt|\$\s?\d{3,}", re.I)
 ZERO_WIDTH = re.compile("[\u200b-\u200f\u2060\ufeff]")
 
 
@@ -64,16 +64,18 @@ def call_model(system, user):
     from google import genai
     from google.genai import types
     try:
-        client = genai.Client(api_key=os.environ["GEMINI_API_KEY"], http_options=types.HttpOptions(timeout=25000))
+        fast = system is HELP_SYSTEM  # a buyer is waiting: one attempt, ten seconds, then the template reply
+        client = genai.Client(api_key=os.environ["GEMINI_API_KEY"], http_options=types.HttpOptions(timeout=10000 if fast else 25000))
     except KeyError as e:
         raise ModelUnavailable() from e
     cfg = types.GenerateContentConfig(system_instruction=system, response_mime_type="application/json", temperature=0.2)
-    for attempt in range(2):
+    tries = 1 if fast else 2
+    for attempt in range(tries):
         try:
             return client.models.generate_content(model=os.environ["GEMINI_MODEL"], contents=user, config=cfg).text
         except Exception as e:
             log.warning("model error: %s", str(e)[:200])
-            if attempt == 1 or not any(c in str(e) for c in ("429", "503", "504", "RESOURCE_EXHAUSTED", "UNAVAILABLE", "timed out", "Timeout")):
+            if attempt == tries - 1 or not any(c in str(e) for c in ("429", "503", "504", "RESOURCE_EXHAUSTED", "UNAVAILABLE", "timed out", "Timeout")):
                 raise ModelUnavailable() from e
             time.sleep(retry_delay(e))
 
@@ -130,7 +132,7 @@ def validate_pack(text, ids, reason):
         rec = "MAKE_OFFER"
     if reason == "MERCHANDISE_OR_SERVICE_NOT_AS_DESCRIBED":
         covered, rec = False, "MAKE_OFFER"
-    return {"covered": covered, "summary": data["summary"], "claims": claims, "recommendation": rec}
+    return {"covered": covered, "summary": pack_summary(claims, reason), "claims": claims, "recommendation": rec}
 
 
 def view(rows):
@@ -187,11 +189,48 @@ def handle_help(order, message, token):
     return res
 
 
+CLAIM_TEXT = {"PURCHASE_CAPTURED": "The purchase was successfully captured.", "DELIVERY_EMAIL_LOGGED": "The download link was issued for the buyer's address on file.",
+              "LINK_OPENED": "The download link was opened by the buyer.", "FILE_DOWNLOADED": "The digital file was downloaded by the buyer."}
+
+
+def pack_summary(claims, reason):
+    """The note sent to PayPal is built in code from the cited claims, so no free-form model text goes out unchecked."""
+    what = "not as described" if reason == "MERCHANDISE_OR_SERVICE_NOT_AS_DESCRIBED" else "not received"
+    return "The buyer says the item was %s. The digital goods access ledger records: %s" % (what, " ".join(c["text"] for c in claims) or "no delivery events.")
+
+
+def template_pack(dispute, rows):
+    """The pack without a model: one claim per kind of delivery event, each citing the first such ledger row."""
+    first = {}
+    for r in rows:
+        first.setdefault(r["event"], r["id"])
+    claims = [{"text": CLAIM_TEXT[e], "event_ids": [first[e]]} for e in CLAIM_TEXT if e in first]
+    proved = "FILE_DOWNLOADED" in first or "LINK_OPENED" in first
+    covered = proved and dispute["reason"] != "MERCHANDISE_OR_SERVICE_NOT_AS_DESCRIBED"
+    return {"covered": covered, "summary": pack_summary(claims, dispute["reason"]), "claims": claims,
+            "recommendation": "SUBMIT_EVIDENCE" if covered else "MAKE_OFFER", "template": True}
+
+
+def finalize_pack(pack, dispute, rows):
+    """The model picks which ledger events support the case; the wording that goes to PayPal is written here from those events,
+    and `covered` needs an opened link or a download (a payment alone does not show delivery)."""
+    kinds = {r["id"]: r["event"] for r in rows}
+    claims = []
+    for c in pack["claims"]:
+        text = " ".join(CLAIM_TEXT[k] for k in dict.fromkeys(kinds[i] for i in c["event_ids"]) if k in CLAIM_TEXT)
+        if text:
+            claims.append({"text": text, "event_ids": c["event_ids"]})
+    proved = any(kinds[i] in ("LINK_OPENED", "FILE_DOWNLOADED") for c in claims for i in c["event_ids"])
+    covered = pack["covered"] and proved
+    rec = pack["recommendation"] if covered or pack["recommendation"] != "SUBMIT_EVIDENCE" else "MAKE_OFFER"
+    return {"covered": covered, "summary": pack_summary(claims, dispute["reason"]), "claims": claims, "recommendation": rec}
+
+
 def evidence_pack(dispute, rows):
     ids = {r["id"] for r in rows}
     user = "Dispute reason: %s\nAmount: %s %s\nLedger:\n%s" % (dispute["reason"], dispute["amount"], dispute["currency"],
                                                               json.dumps(view(rows)))
     try:
-        return ask(PACK_SYSTEM, user, lambda t: validate_pack(t, ids, dispute["reason"]))
+        return finalize_pack(ask(PACK_SYSTEM, user, lambda t: validate_pack(t, ids, dispute["reason"])), dispute, rows)
     except (ModelUnavailable, ValueError):
-        return {"unavailable": True}
+        return template_pack(dispute, rows)

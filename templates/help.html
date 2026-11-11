@@ -40,7 +40,7 @@
       <button type="button" data-text="The file won't open">The file won't open</button>
       <button type="button" data-text="I want a refund">I want a refund</button>
     </div>
-    <form class="composer" id="composer" method="post" action="/order/{{ order.id }}/help">
+    <form class="composer" id="composer" method="post" action="/order/{{ order.id }}/help?t={{ token }}">
       <label class="sr" for="chat-input">Your message</label>
       <textarea id="chat-input" name="message" maxlength="1000" rows="1" required placeholder="Ask about your order…"></textarea>
       <button class="btn send" type="submit" aria-label="Send">{{ icon("send") }}</button>

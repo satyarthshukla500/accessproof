@@ -1,0 +1,27 @@
+services:
+  - type: web
+    name: accessproof
+    runtime: python
+    plan: free
+    buildCommand: pip install -r requirements.txt
+    # seeds demo rows only when the database is empty; one worker keeps the in-memory rate limit honest
+    startCommand: python scripts/seed.py --if-empty && gunicorn app:app --workers 1 --threads 4 --timeout 120
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.11.9
+      - key: PRODUCTION
+        value: "1"
+      - key: PAYPAL_CLIENT_ID
+        sync: false
+      - key: PAYPAL_CLIENT_SECRET
+        sync: false
+      - key: PAYPAL_WEBHOOK_ID
+        sync: false
+      - key: GEMINI_API_KEY
+        sync: false
+      - key: GEMINI_MODEL
+        value: gemini-3.5-flash-lite
+      - key: APP_SECRET
+        generateValue: true
+      - key: SELLER_PASSWORD
+        sync: false

@@ -1,6 +1,7 @@
 import base64
 import hashlib
 import hmac
+import json
 import logging
 import math
 import os
@@ -94,7 +95,7 @@ def log_event(order_id, event, detail=None):
 
 @app.get("/")
 def store():
-    return render_template("store.html", product=PRODUCT)
+    return render_template("store.html", product=PRODUCT, chain=ledger.latest_chain())
 
 
 @app.get("/config")
@@ -148,7 +149,9 @@ def success(order_id):
         abort(404)
     if not any(r["event"] == "DELIVERY_EMAIL_LOGGED" for r in ledger.rows(order_id)):
         log_event(order_id, "DELIVERY_EMAIL_LOGGED", {"to": order["payer_email"], "note": "download link issued; no email service is connected"})
-    return render_template("success.html", order=order, product=PRODUCT, link="/d/" + sign(order_id))
+    rows = ledger.rows(order_id)
+    return render_template("success.html", order=order, product=PRODUCT, link="/d/" + sign(order_id),
+                           chain=ledger.blocks(rows), next_label=ledger.next_label(rows))
 
 
 @app.get("/d/<token>")
@@ -163,21 +166,38 @@ def download(token):
     return send_file(PRODUCT["file"], as_attachment=True, download_name="notion-freelancer-starter-kit.pdf")
 
 
+def chat_view(row, rows_by_id):
+    """One stored help request as a chat turn (no IPs, only public event fields)."""
+    cited = [rows_by_id[i] for i in json.loads(row["cited"] or "[]") if i in rows_by_id]
+    return dict(row, events=ledger.public_events(cited))
+
+
 @app.route("/order/<order_id>/help", methods=["GET", "POST"])
 def help_page(order_id):
     order = db.one("SELECT * FROM orders WHERE id=?", (order_id,))
     if not order:
         abort(404)
-    result = None
+    wants_json = request.is_json
     if request.method == "POST":
         if limits.rate_limited("help:" + client_ip()):
+            if wants_json:
+                return jsonify(error="Too many requests. Try again later."), 429
             return render_template("message.html", title="Slow down", text="Too many requests. Try again later."), 429
-        message = CONTROL.sub("", request.form.get("message", "")).strip()[:1000]
+        raw = (request.get_json(silent=True) or {}).get("message", "") if wants_json else request.form.get("message", "")
+        message = CONTROL.sub("", str(raw)).strip()[:1000]
+        if wants_json and not message:
+            return jsonify(error="Please type a message."), 400
         if message:
             result = assistant.handle_help(order, message, sign(order_id))
             if result["action"] == "RESEND":
                 log_event(order_id, "LINK_RESENT")
-    return render_template("help.html", order=order, result=result, token=sign(order_id))
+            if wants_json:
+                body = {k: result[k] for k in ("id", "reply", "intent", "action", "flagged", "fallback", "outcome", "refund", "link")}
+                return jsonify(dict(body, events=ledger.public_events(result["events"])))
+    rows = ledger.rows(order_id)
+    by_id = {r["id"]: r for r in rows}
+    history = [chat_view(h, by_id) for h in db.query("SELECT * FROM help_requests WHERE order_id=? ORDER BY id", (order_id,))]
+    return render_template("help.html", order=order, history=history, token=sign(order_id), status=ledger.status_line(rows), chain=ledger.blocks(rows))
 
 
 @app.post("/order/<order_id>/help/<int:help_id>/solved")

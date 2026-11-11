@@ -1,17 +1,40 @@
 {% extends "base.html" %}
+{% from "_ui.html" import proof, icon %}
 {% block body %}
-<section class="card product">
-  <h1>{{ product.title }}</h1>
-  <p class="muted">A 6 page PDF guide to set up Notion for clients, projects and invoices.</p>
-  <ul class="list">
-    <li>Clients, projects and invoice database layouts</li>
-    <li>A weekly review checklist</li>
-    <li>Instant signed download link, valid for 7 days</li>
-  </ul>
-  <p class="price">${{ product.price }} <span class="muted small">USD</span></p>
-  <div id="paypal-button"></div>
-  <p id="msg" class="small danger"></p>
-  <p class="muted small">Payments run in the PayPal sandbox. No real money moves.</p>
+{% set example = not chain %}
+<section class="hero">
+  <div class="hero-copy rise">
+    <span class="pill">Every download, provable</span>
+    <h1 class="display">Buy it once.<br><span class="grad-text">Proof forever.</span></h1>
+    <p class="lead">A six-page guide to running clients, projects and invoices in Notion. Every step of your purchase is sealed in a tamper-evident chain, so if anything goes wrong the proof is already there.</p>
+    <div class="card chain-card">
+      <p class="eyebrow">Live proof chain{% if example %} · example{% endif %}</p>
+      {% if example %}
+        {{ proof([{"id": 47, "label": "Paid", "short": "10:02", "when": ""}, {"id": 48, "label": "Link sent", "short": "10:02", "when": ""}, {"id": 49, "label": "Opened", "short": "10:03", "when": ""}, {"id": 50, "label": "Downloaded", "short": "10:03", "when": ""}]) }}
+      {% else %}{{ proof(chain) }}{% endif %}
+    </div>
+  </div>
+  <div class="card checkout rise d2">
+    <div class="product">
+      <img class="cover" src="{{ url_for('static', filename='cover.png') }}" alt="Cover of {{ product.title }}" width="112" height="149">
+      <div><p class="eyebrow">Digital guide · PDF</p><h2>{{ product.title }}</h2><p class="price">${{ product.price }} <small>USD</small></p></div>
+    </div>
+    <ul class="ticks">
+      <li>{{ icon("check") }}Client, project and invoice databases</li>
+      <li>{{ icon("check") }}A weekly review checklist</li>
+      <li>{{ icon("check") }}Signed download link, valid for 7 days</li>
+    </ul>
+    <div id="paypal-button"></div>
+    <p id="msg" class="small danger" role="alert"></p>
+    <p class="small muted">Secure sandbox checkout · no real money moves.</p>
+    <div class="chips"><span class="chip">{{ icon("download") }}Instant download</span><span class="chip">{{ icon("shield") }}Proof recorded</span><span class="chip">{{ icon("chat") }}Help built in</span></div>
+  </div>
 </section>
+<section class="steps rise d3" aria-label="How AccessProof protects this purchase">
+  <div class="card step"><span class="ico-box">{{ icon("bag") }}</span><h3>1 · You pay with PayPal</h3><p>One button, handled entirely by PayPal.</p></div>
+  <div class="card step"><span class="ico-box">{{ icon("link") }}</span><h3>2 · Delivery is sealed</h3><p>Payment, link, open and download are chained together with hashes.</p></div>
+  <div class="card step"><span class="ico-box">{{ icon("chat") }}</span><h3>3 · The proof answers</h3><p>If something goes wrong, you get help from your own delivery record.</p></div>
+</section>
+<p class="foot">AccessProof demo store · PayPal sandbox only.</p>
 {% endblock %}
 {% block head %}<script src="{{ url_for('static', filename='store.js') }}" defer></script>{% endblock %}

@@ -1,19 +1,24 @@
+{% from "_ui.html" import brand %}
 <!doctype html>
 <html lang="en">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>{% block title %}AccessProof{% endblock %}</title>
+<link rel="icon" href="{{ url_for('static', filename='favicon.svg') }}" type="image/svg+xml">
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="{{ url_for('static', filename='app.css') }}">
 {% block head %}{% endblock %}
 </head>
-<body>
-<header class="top"><div class="wrap bar">
-  <a class="brand" href="/">AccessProof</a>
-  <span class="muted small">Sandbox demo store</span>
+<body class="{% block bodyclass %}{% endblock %}">
+{% block shell %}
+<header class="top"><div class="wrap">
+  {{ brand() }}
+  {% block topright %}<span class="pill plain">Sandbox demo store</span>{% endblock %}
 </div></header>
 <main class="wrap">{% block body %}{% endblock %}</main>
+{% endblock %}
+{% block after %}{% endblock %}
 </body>
 </html>

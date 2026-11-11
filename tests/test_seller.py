@@ -230,7 +230,7 @@ def test_stats_skip_seed_rows_and_real_disputes_sort_first(client):
     db.run("UPDATE disputes SET last_result='Evidence submitted to PayPal' WHERE id='D9'")
     db.run("INSERT INTO disputes(id,source,last_result,created_at) VALUES('S1','seed','Evidence submitted to PayPal','2030-01-01')")
     data = client.get("/api/data").get_json()
-    assert data["stats"] == {"deflected": 1, "filed": 1, "fees": 15}
+    assert data["stats"] == {"deflected": 1, "filed": 1, "fees": 15, "refunds": 0}
     assert data["disputes"][0]["id"] == "D9" and seller  # real rows first
 
 

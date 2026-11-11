@@ -46,6 +46,46 @@ def fmt_ts(ts):
     return "%d %s" % (d.day, d.strftime("%b %Y, %H:%M UTC"))
 
 
+SHORT = {"PURCHASE_CAPTURED": "Paid", "DELIVERY_EMAIL_LOGGED": "Link sent", "LINK_OPENED": "Opened", "FILE_DOWNLOADED": "Downloaded",
+         "LINK_RESENT": "Re-sent", "REFUND_APPROVED": "Refunded", "EVIDENCE_SUBMITTED": "Evidence sent"}
+FLOW = ["PURCHASE_CAPTURED", "DELIVERY_EMAIL_LOGGED", "LINK_OPENED", "FILE_DOWNLOADED"]
+
+
+def blocks(rows, limit=4):
+    """Events as numbered proof-chain blocks (no IP or user agent)."""
+    return [{"id": r["id"], "label": SHORT.get(r["event"], r["event"]), "when": fmt_ts(r["ts"]), "short": short_ts(r["ts"])} for r in rows[:limit]]
+
+
+def short_ts(ts):
+    try:
+        return datetime.fromisoformat(ts).strftime("%H:%M")
+    except (TypeError, ValueError):
+        return ""
+
+
+def next_label(rows):
+    seen = {r["event"] for r in rows}
+    return next((SHORT[e] for e in FLOW if e not in seen), None)
+
+
+def public_events(rows):
+    return [{"id": r["id"], "name": EVENT_LABELS.get(r["event"], r["event"]), "when": fmt_ts(r["ts"])} for r in rows]
+
+
+def latest_chain():
+    order = db.one("SELECT id FROM orders WHERE source='real' ORDER BY created_at DESC LIMIT 1")
+    return blocks(rows(order["id"])) if order else []
+
+
+def status_line(rows):
+    events = {r["event"]: r for r in rows}
+    if "FILE_DOWNLOADED" in events:
+        return "Your payment was captured and your file was downloaded on %s." % fmt_ts(events["FILE_DOWNLOADED"]["ts"])
+    if "DELIVERY_EMAIL_LOGGED" in events:
+        return "Your payment was captured and your download link was issued on %s. I don't see it opened yet." % fmt_ts(events["DELIVERY_EMAIL_LOGGED"]["ts"])
+    return "Your payment was captured."
+
+
 def rows(order_id):
     return db.query("SELECT * FROM ledger WHERE order_id=? ORDER BY id", (order_id,))
 

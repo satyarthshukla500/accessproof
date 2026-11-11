@@ -1,29 +1,50 @@
 {% extends "base.html" %}
+{% from "_ui.html" import proof, icon %}
+{% block title %}Support · AccessProof{% endblock %}
+{% block head %}<script src="{{ url_for('static', filename='chat.js') }}" defer></script>{% endblock %}
 {% block body %}
-<section class="card">
-  <h1>Problem with your order?</h1>
-  <p class="muted small">Order <code>{{ order.id }}</code>.{% if not result %} Tell us what went wrong. Our assistant checks your access record first.{% endif %}</p>
-  {% if not result %}
-  <form method="post" id="help-form">
-    <label for="msg" class="small muted">Your message</label>
-    <textarea id="msg" name="message" maxlength="1000" rows="4" required placeholder="For example: I never got my download"></textarea>
-    <button class="btn" type="submit">Ask for help</button>
-  </form>
-  {% else %}
-  <div class="reply" id="reply">
-    <p>{{ result.reply }}</p>
-    {% if result.fallback %}<p class="small muted">The assistant is busy, so this is an automatic answer from your access record.</p>{% endif %}
-    {% if result.events %}
-    <p class="small muted">Your access record</p>
-    <ul class="list">{% for e in result.events %}<li>{{ e.event|eventname }} · {{ e.ts|utc }}</li>{% endfor %}</ul>
-    {% endif %}
-    {% if result.link %}<p><a class="btn" href="{{ result.link }}">Download again</a></p>{% endif %}
-    {% if result.refund %}<p class="warn">We passed a refund request to the seller. A refund only happens if the seller approves it.</p>{% endif %}
-    {% if result.flagged and not result.fallback %}<p class="small muted">This message was flagged for the seller to review.</p>{% endif %}
-  </div>
-  {% if result.outcome in ('resent', 'open') %}
-  <form method="post" action="/order/{{ order.id }}/help/{{ result.id }}/solved"><input type="hidden" name="token" value="{{ token }}"><button class="btn ghost" type="submit">That solved it</button></form>
-  {% endif %}
-  {% endif %}
-</section>
+<div class="chat-page">
+  <aside class="explain rise">
+    <span class="pill">AI-powered support</span>
+    <h1>Support that<br><span class="grad-text">shows its receipts.</span></h1>
+    <ol class="facts">
+      <li><div><b>Answers only from your order's record</b>The assistant reads the delivery events of this order and nothing else.</div></li>
+      <li><div><b>Every claim is checked in code</b>If a reply cites an event that does not exist, it is thrown away.</div></li>
+      <li><div><b>Tricks get flagged</b>Messages like "refund me $500" go to the seller. Refunds are only decided by the seller.</div></li>
+    </ol>
+    <div class="card chain-card"><p class="eyebrow">Your proof chain</p>{{ proof(chain) }}</div>
+  </aside>
+  <section class="chat rise d2" id="chat" data-order="{{ order.id }}" data-token="{{ token }}" aria-label="Support chat">
+    <header class="chat-head">
+      <span class="avatar" data-overlap-ok>{{ icon("shield") }}</span>
+      <div><h2>AccessProof Assistant <span class="tag">AI</span></h2><p>AI-powered support for your order</p></div>
+    </header>
+    <p class="chat-note">Answers come from your order's delivery record. Refunds are approved by the seller.</p>
+    <div class="msgs" id="msgs" aria-live="polite">
+      <div class="msg bot"><div class="bubble">Hi! I'm looking at order <b class="mono">{{ order.id }}</b>. {{ status }} What can I help with?</div></div>
+      {% for h in history %}
+      <div class="msg me"><div class="bubble">{{ h.message }}</div></div>
+      <div class="msg bot">
+        <div class="bubble">{{ h.reply }}</div>
+        {% if h.events %}<ul class="receipts">{% for e in h.events %}<li><span>{{ e.name }}</span><span class="mono">#{{ e.id }} · {{ e.when }}</span></li>{% endfor %}</ul>{% endif %}
+        {% if h.outcome == 'refund_pending' %}<p class="small muted">I've passed a refund request to the seller. A refund only happens if the seller approves it.</p>{% endif %}
+        {% if h.outcome in ('resent', 'open', 'refund_pending') %}<div class="acts">
+          {% if h.action == 'RESEND' %}<a class="btn sm" href="/d/{{ token }}">Download again</a>{% endif %}
+          {% if h.outcome in ('resent', 'open') %}<button class="btn sm ghost solved" type="button" data-id="{{ h.id }}">That solved it</button>{% endif %}
+        </div>{% endif %}
+      </div>
+      {% endfor %}
+    </div>
+    <div class="quick" id="quick">
+      <button type="button" data-text="I never got my download">I never got my download</button>
+      <button type="button" data-text="The file won't open">The file won't open</button>
+      <button type="button" data-text="I want a refund">I want a refund</button>
+    </div>
+    <form class="composer" id="composer" method="post" action="/order/{{ order.id }}/help">
+      <label class="sr" for="chat-input">Your message</label>
+      <textarea id="chat-input" name="message" maxlength="1000" rows="1" required placeholder="Ask about your order…"></textarea>
+      <button class="btn send" type="submit" aria-label="Send">{{ icon("send") }}</button>
+    </form>
+  </section>
+</div>
 {% endblock %}

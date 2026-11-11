@@ -1,33 +1,57 @@
 {% extends "base.html" %}
-{% block title %}Dashboard · AccessProof{% endblock %}
+{% from "_ui.html" import brand, icon %}
+{% block title %}Command center · AccessProof{% endblock %}
+{% block bodyclass %}dark app-body{% endblock %}
 {% block head %}
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/ag-grid-community@32.3.3/styles/ag-grid.css">
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/ag-grid-community@32.3.3/styles/ag-theme-quartz.css">
+<link rel="stylesheet" href="{{ url_for('static', filename='dash.css') }}">
 <script src="https://cdn.jsdelivr.net/npm/ag-grid-community@32.3.3/dist/ag-grid-community.min.js" defer></script>
 <script src="{{ url_for('static', filename='dashboard.js') }}" defer></script>
+<script src="{{ url_for('static', filename='grids.js') }}" defer></script>
 {% endblock %}
-{% block body %}
-<div id="app" data-csrf="{{ csrf }}">
-  <div class="stats">
-    <div class="card"><div class="muted small">Disputes deflected</div><div class="stat" id="s-deflected">0</div></div>
-    <div class="card"><div class="muted small">Est. fees avoided</div><div class="stat" id="s-fees">$0</div><div class="muted small">est. at US standard dispute fee ($15)</div></div>
-    <div class="card"><div class="muted small">Evidence packs filed</div><div class="stat" id="s-filed">0</div></div>
-  </div>
-  <div class="tabs" role="tablist">
-    <button class="tab on" id="tab-orders">Orders</button>
-    <button class="tab" id="tab-ledger">Access ledger</button>
-    <button class="tab" id="tab-help">Help requests</button>
-    <button class="tab" id="tab-disputes">Disputes</button>
-    <span style="flex:1"></span>
-    <button class="btn ghost small" id="sync">Sync disputes</button>
-    <button class="btn ghost small" id="sample">Load sample dispute (not from PayPal)</button>
-    <button class="btn ghost small" id="sample-snad">Sample SNAD dispute</button>
-    <form method="post" action="/logout" style="margin:0"><input type="hidden" name="csrf" value="{{ csrf }}"><button class="btn ghost small" type="submit">Log out</button></form>
-  </div>
-  <p class="status" id="status" role="status"></p>
-  <div class="panel on" id="panel-orders"><div id="grid-orders" class="grid ag-theme-quartz"></div></div>
-  <div class="panel" id="panel-ledger"><div id="grid-ledger" class="grid ag-theme-quartz"></div></div>
-  <div class="panel" id="panel-help"><div id="grid-help" class="grid ag-theme-quartz"></div></div>
-  <div class="panel" id="panel-disputes"><div id="grid-disputes" class="grid ag-theme-quartz"></div></div>
+{% block shell %}
+<div class="app" id="app" data-csrf="{{ csrf }}">
+  <aside class="side" data-overlap-ok>
+    {{ brand(30) }}
+    <nav class="nav" aria-label="Sections">
+      <a id="tab-overview" href="#overview" class="on">{{ icon("grid") }}<span>Command center</span></a>
+      <a id="tab-orders" href="#orders">{{ icon("bag") }}<span>Orders</span></a>
+      <a id="tab-ledger" href="#ledger">{{ icon("link") }}<span>Proof chains</span></a>
+      <a id="tab-help" href="#help">{{ icon("chat") }}<span>Support chats</span></a>
+      <a id="tab-disputes" href="#disputes">{{ icon("alert") }}<span>Disputes</span></a>
+    </nav>
+    <div class="side-foot">
+      <p class="small muted">Sandbox mode · seed data hidden from totals</p>
+      <form method="post" action="/logout"><input type="hidden" name="csrf" value="{{ csrf }}"><button class="navbtn" type="submit">{{ icon("logout") }}<span>Log out</span></button></form>
+    </div>
+  </aside>
+  <section class="main">
+    <header class="bar">
+      <div><p class="eyebrow" id="eyebrow">Command center</p><h1 id="title">Every sale, provable.</h1></div>
+      <div class="bar-actions">
+        <button class="btn sm ghost" id="sync" type="button">Sync disputes</button>
+        <button class="btn sm ghost" id="sample" type="button">Load sample dispute</button>
+        <button class="btn sm ghost" id="sample-snad" type="button">Sample not-as-described</button>
+        <form class="mobile-only" method="post" action="/logout"><input type="hidden" name="csrf" value="{{ csrf }}"><button class="btn sm ghost" type="submit">Log out</button></form>
+      </div>
+    </header>
+    <div class="panel on" id="panel-overview">
+      <div class="stats" id="stats"></div>
+      <div class="grid2">
+        <section class="hero-card" id="hero" aria-live="polite"></section>
+        <section class="card feed"><p class="eyebrow">Live activity</p><ul id="feed"></ul></section>
+      </div>
+      <section class="card feed"><p class="eyebrow">Recent proof events</p><ul id="timeline" class="tl"></ul></section>
+    </div>
+    <div class="panel" id="panel-orders"><div id="grid-orders" class="grid ag-theme-quartz-dark"></div></div>
+    <div class="panel" id="panel-ledger"><div id="grid-ledger" class="grid ag-theme-quartz-dark"></div></div>
+    <div class="panel" id="panel-help"><div id="grid-help" class="grid ag-theme-quartz-dark"></div></div>
+    <div class="panel" id="panel-disputes"><div id="grid-disputes" class="grid ag-theme-quartz-dark"></div></div>
+  </section>
 </div>
+<div class="scrim" id="scrim"></div>
+<aside class="drawer" id="drawer" aria-hidden="true" aria-label="Dispute details"></aside>
+<dialog id="confirm"><form method="dialog"><p id="confirm-text"></p><div class="acts"><button class="btn sm ghost" value="no">Cancel</button><button class="btn sm" value="yes">Confirm</button></div></form></dialog>
+<div class="toasts" id="toasts" aria-live="polite"></div>
 {% endblock %}

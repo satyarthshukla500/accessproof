@@ -13,6 +13,7 @@ import db
 import evidence
 import ledger
 import limits
+import overview
 import paypal
 from disputes import has_link, make_sample, raw_of, refresh, requested_type, upsert_dispute
 
@@ -76,8 +77,10 @@ def data():
     chain = {o["id"]: ledger.verify(o["id"]) for o in orders}
     rows = db.query("SELECT * FROM ledger ORDER BY id DESC")
     disputes = db.query("SELECT * FROM disputes ORDER BY (source='paypal') DESC, created_at DESC")
+    cache = {}
     for d in disputes:
         raw = raw_of(d)
+        d.update(overview.dispute_view(d, cache))
         d.pop("raw")
         pack = json.loads(d.pop("pack") or "null")
         d.update(has_pack=bool(pack), summary=pack and pack["summary"],
@@ -88,11 +91,12 @@ def data():
     stats = {"deflected": db.one("SELECT COUNT(*) n FROM help_requests WHERE outcome='deflected' AND source!='seed'")["n"],
              "filed": db.one("SELECT COUNT(*) n FROM disputes WHERE last_result LIKE 'Evidence submitted%' AND source!='seed'")["n"]}
     stats["fees"] = stats["deflected"] * FEE
+    stats["refunds"] = db.one("SELECT COUNT(*) n FROM ledger l JOIN orders o ON o.id=l.order_id WHERE l.event='REFUND_APPROVED' AND o.source!='seed'")["n"]
     return jsonify(stats=stats, orders=[dict(o, chain=chain[o["id"]], when=ledger.fmt_ts(o["created_at"])) for o in orders],
                    ledger=[dict(r, chain=chain.get(r["order_id"], ""), when=ledger.fmt_ts(r["ts"])) for r in rows],
                    help=db.query("SELECT h.*, r.id refund_id, r.status refund_status FROM help_requests h "
                                  "LEFT JOIN refund_requests r ON r.help_id=h.id ORDER BY h.id DESC"),
-                   disputes=disputes)
+                   disputes=disputes, feed=overview.feed(), timeline=overview.timeline())
 
 
 @bp.post("/seller/refund/<int:rid>/approve")

@@ -163,7 +163,7 @@ def handle_help(order, message, token):
     fallback = False
     if injected:  # no model call: the buyer text is an attack, not a question
         res = {"intent": "WANTS_REFUND", "action": "NONE", "cited": [r["id"] for r in rows if r["event"] == "FILE_DOWNLOADED"],
-               "reply": "Your message was flagged and passed to the seller. Refunds are decided only by the seller. Your access record is below."}
+               "reply": "I've passed this to the seller. Refunds are only decided by the seller."}
     else:
         safe = message.replace("<", "&lt;").replace(">", "&gt;")
         user = "<buyer_message>\n%s\n</buyer_message>\n\nAccess record:\n%s" % (safe, json.dumps(view(rows)))

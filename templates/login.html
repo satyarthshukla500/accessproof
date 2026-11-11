@@ -1,12 +1,22 @@
 {% extends "base.html" %}
+{% from "_ui.html" import icon %}
+{% block title %}Seller sign-in · AccessProof{% endblock %}
+{% block bodyclass %}dark{% endblock %}
+{% block topright %}<span class="pill plain">Seller sign-in</span>{% endblock %}
+{% block head %}<script src="{{ url_for('static', filename='login.js') }}" defer></script>{% endblock %}
 {% block body %}
-<section class="card narrow">
-  <h1>Seller login</h1>
-  <form method="post">
-    <label for="pw" class="small muted">Seller password</label>
-    <input id="pw" type="password" name="password" required autofocus>
-    {% if error %}<p class="danger small">{{ error }}</p>{% endif %}
-    <button class="btn" type="submit">Log in</button>
+<div class="center">
+  <form class="card auth rise" method="post">
+    <div><p class="eyebrow">Seller</p><h1>Every sale, provable.</h1></div>
+    <div>
+      <label for="pw">Seller password</label>
+      <div class="field">
+        <input id="pw" type="password" name="password" required autofocus autocomplete="current-password">
+        <button class="btn" type="button" id="toggle" aria-label="Show password" data-overlap-ok>{{ icon("eye") }}</button>
+      </div>
+    </div>
+    {% if error %}<p class="danger small" role="alert">{{ error }}</p>{% endif %}
+    <button class="btn" type="submit">Sign in</button>
   </form>
-</section>
+</div>
 {% endblock %}

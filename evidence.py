@@ -18,6 +18,27 @@ def p(text, style="BodyText"):
     return Paragraph(escape(clean), SMALL if style == "small" else STYLES[style])
 
 
+def header(canvas, doc):
+    """Brand mark and wordmark at the top of every page."""
+    x, y = 0.7 * inch, letter[1] - 0.66 * inch
+    navy, mint = colors.HexColor("#0B1B33"), colors.HexColor("#2DD4BF")
+    canvas.saveState()
+    canvas.setFillColor(navy)
+    canvas.roundRect(x, y, 24, 24, 6, fill=1, stroke=0)
+    canvas.setStrokeColor(mint)
+    canvas.setLineWidth(1.2)
+    canvas.roundRect(x + 4, y + 8, 7, 8, 2, fill=0, stroke=1)
+    canvas.line(x + 11, y + 12, x + 13, y + 12)
+    canvas.setFillColor(mint)
+    canvas.roundRect(x + 13, y + 8, 7, 8, 2, fill=1, stroke=0)
+    canvas.setFillColor(navy)
+    canvas.setFont("Helvetica-Bold", 13)
+    canvas.drawString(x + 32, y + 8, "Access")
+    canvas.setFillColor(colors.HexColor("#0F766E"))
+    canvas.drawString(x + 32 + canvas.stringWidth("Access", "Helvetica-Bold", 13), y + 8, "Proof")
+    canvas.restoreState()
+
+
 def short(ua, n=70):
     return ua if len(ua) <= n else ua[: n - 3] + "..."
 
@@ -25,7 +46,7 @@ def short(ua, n=70):
 def build_pdf(dispute, order, rows, pack, chain):
     buf = io.BytesIO()
     doc = SimpleDocTemplate(buf, pagesize=letter, title="Evidence pack", leftMargin=0.7 * inch, rightMargin=0.7 * inch,
-                            topMargin=0.7 * inch, bottomMargin=0.7 * inch)
+                            topMargin=1.0 * inch, bottomMargin=0.7 * inch)
     out = [p("Evidence pack: proof of delivery of a digital product", "Title")]
     if dispute.get("source") in ("sample", "seed"):
         out.append(p("SAMPLE dispute (not from PayPal): this pack was built for demonstration.", "Heading3"))
@@ -45,5 +66,5 @@ def build_pdf(dispute, order, rows, pack, chain):
     t.setStyle(TableStyle([("GRID", (0, 0), (-1, -1), 0.4, colors.lightgrey), ("BACKGROUND", (0, 0), (-1, 0), colors.whitesmoke),
                            ("VALIGN", (0, 0), (-1, -1), "TOP")]))
     out += [t, Spacer(1, 8), p("Each ledger row stores the hash of the previous row, so changing any row breaks the chain. Chain status: %s. DELIVERY_EMAIL_LOGGED records that the download link was issued for the payer's address on file; no email service is connected." % chain, "small")]
-    doc.build(out)
+    doc.build(out, onFirstPage=header, onLaterPages=header)
     return buf.getvalue()

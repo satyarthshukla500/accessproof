@@ -309,10 +309,11 @@ def test_logout_revokes_a_copied_cookie(client):
     assert client.get("/api/data").status_code in (302, 401)
 
 
-def test_login_is_limited_overall_not_only_per_address(client):
-    for _ in range(300):
-        limits.add("login:all")
-    assert client.post("/login", data={"password": "pw-test"}).status_code == 429
+def test_one_address_cannot_lock_out_another(client):
+    for _ in range(5):
+        client.post("/login", data={"password": "nope"}, environ_overrides={"REMOTE_ADDR": "198.51.100.1"})
+    assert client.post("/login", data={"password": "pw-test"}, environ_overrides={"REMOTE_ADDR": "198.51.100.1"}).status_code == 429
+    assert client.post("/login", data={"password": "pw-test"}, environ_overrides={"REMOTE_ADDR": "198.51.100.2"}).status_code == 302
 
 
 def test_second_refund_for_an_order_is_refused(client, monkeypatch):
@@ -334,3 +335,13 @@ def test_filing_sends_the_chain_head_to_paypal(client, monkeypatch):
     head = ledger.head("o1")
     assert client.post("/seller/disputes/D9/submit", headers={"X-CSRF": csrf}).status_code == 200
     assert "Ledger chain head at filing: " + head in sent[0][2]
+
+
+def test_paypal_record_and_filed_count_come_from_paypals_own_evidence_list(client):
+    from tests.test_seed import load_seed
+    load_seed().load_real_case()
+    login(client)
+    data = client.get("/api/data").get_json()
+    d = data["disputes"][0]
+    assert d["filed"] is True and data["stats"]["filed"] == 1
+    assert [r["who"] for r in d["record"]] == ["Buyer", "Seller"] and d["record"][1]["pdf"] is True

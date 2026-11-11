@@ -9,7 +9,7 @@ import re
 import time
 
 from dotenv import load_dotenv
-from flask import Flask, abort, jsonify, render_template, request, send_file
+from flask import Flask, abort, jsonify, render_template, request, send_file, session
 from werkzeug.middleware.proxy_fix import ProxyFix
 
 load_dotenv()
@@ -117,6 +117,7 @@ def create_order():
         return jsonify(error="Too many requests"), 429
     try:
         o = paypal.create_order(PRODUCT["price"], PRODUCT["title"], PRODUCT["id"])
+        session["orders"] = (session.get("orders", []) + [o["id"]])[-5:]  # only the browser that started this checkout may complete it
         return jsonify(id=o["id"])
     except (paypal.PayPalError, KeyError):
         log.exception("create order failed")
@@ -127,6 +128,8 @@ def create_order():
 def capture(order_id):
     if not ID_RE.fullmatch(order_id):
         abort(404)
+    if order_id not in session.get("orders", []):
+        abort(403)
     if limits.rate_limited("order:" + client_ip(), 30):
         return jsonify(error="Too many requests"), 429
     try:
@@ -175,7 +178,7 @@ def success(order_id):
 @app.get("/d/<token>")
 def download(token):
     order_id = check(token)
-    if not order_id or not db.one("SELECT id FROM orders WHERE id=? AND source='real'", (order_id,))             or db.one("SELECT id FROM ledger WHERE order_id=? AND event='REFUND_APPROVED'", (order_id,)):
+    if not order_id or not db.one("SELECT id FROM orders WHERE id=? AND source='real' AND created_at > datetime('now', ?)", (order_id, "-%d day" % TOKEN_DAYS))             or db.one("SELECT id FROM ledger WHERE order_id=? AND event='REFUND_APPROVED'", (order_id,)):
         return render_template("message.html", title="Link not valid",
                                text="This download link is invalid, has expired, or the order was refunded."), 403
     if request.method == "GET" and os.path.exists(PRODUCT["file"]):  # link scanners send HEAD

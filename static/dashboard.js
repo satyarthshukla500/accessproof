@@ -15,7 +15,7 @@ const VIEWS = {
 const STATES = { WAITING_FOR_SELLER_RESPONSE: "Seller to respond", WAITING_FOR_BUYER_RESPONSE: "Buyer to respond", UNDER_REVIEW: "Under review" };
 const pretty = (s) => (s ? s.replace(/^MERCHANDISE_OR_SERVICE_/, "").replace(/_/g, " ").toLowerCase().replace(/^./, (c) => c.toUpperCase()) : "");
 const stateName = (s) => STATES[s] || pretty(s);
-const submitted = (d) => (d.last_result || "").startsWith("Evidence submitted");
+const submitted = (d) => d.filed || (d.last_result || "").startsWith("Evidence submitted");
 const verdict = (d) => (submitted(d) ? "Evidence submitted" : d.has_pack ? (d.covered ? "Covered" : "Not covered") + (d.source === "paypal" ? " · " + pretty(d.recommendation) : "") : "—");
 
 function el(tag, cls, text) {
@@ -140,11 +140,12 @@ function renderHero() {
   meta.append(el("span", "pill real", "Real · PayPal sandbox"), el("span", "mono muted", d.id), el("span", "pill sm plain", stateName(d.status)));
   const acts = el("div", "acts");
   if (d.has_pack) { const a = el("a", "btn sm", "Open evidence PDF"); a.href = "/seller/disputes/" + encodeURIComponent(d.id) + "/pdf"; a.target = "_blank"; a.rel = "noopener"; acts.append(a); }
+  else acts.append(actButton("Build evidence pack", "/seller/disputes/" + encodeURIComponent(d.id) + "/pack"));
   const claims = el("button", "btn sm ghost", "See cited claims");
   claims.type = "button";
   claims.addEventListener("click", () => openDrawer(d.id));
   acts.append(claims);
-  box.append(meta, el("h2", "", "“I never received it” → answered with proof." + (submitted(d) ? " Evidence filed with PayPal and accepted (HTTP 200)." : "")), chainEl(d.chain));
+  box.append(meta, el("h2", "", "“I never received it” → answered with proof." + (submitted(d) ? " PayPal holds the seller’s evidence." : "")), chainEl(d.chain));
   if (d.summary) box.append(el("p", "muted", d.summary));
   box.append(acts);
 }
@@ -205,6 +206,14 @@ function renderDrawer() {
     meta.append(el("dt", "", k), el("dd", "", v));
   });
   const sections = [meta];
+  if (d.record.length) {  // PayPal's own list of what was filed on the case
+    const rec = el("div");
+    rec.append(el("h3", "", "PayPal’s record"));
+    const ul = el("ul", "record");
+    d.record.forEach((r) => ul.append(el("li", "", r.who + " · " + (r.kind === "Create" ? "opened the case" : r.kind + (r.pdf ? " · PDF on PayPal" : "")) + " · " + r.when)));
+    rec.append(ul);
+    sections.push(rec);
+  }
   const proof = el("div");
   proof.append(el("h3", "", "Proof chain"), chainEl(d.chain));
   sections.push(proof);

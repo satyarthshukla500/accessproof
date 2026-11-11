@@ -96,3 +96,5 @@ dialog::backdrop { background: rgba(5, 12, 24, .6); } dialog p { margin-bottom: 
 .qf { height: 36px; width: 200px; padding: 0 12px; border-radius: 10px; border: 1px solid var(--line); background: var(--card); color: var(--ink); font: 500 13px Inter, sans-serif; }
 .qf:focus-visible { outline: 2px solid var(--mint); outline-offset: 2px; }
 @media (max-width: 520px) { .qf { width: 100%; } #tools { width: 100%; } }
+.record { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; } .record li { padding: 10px 12px; border: 1px solid var(--line); border-radius: 10px; background: var(--card); font-size: 13.5px; }
+@media (max-width: 900px) { .ag-theme-quartz-dark .ag-cell .stack { padding-block: 12px; } }

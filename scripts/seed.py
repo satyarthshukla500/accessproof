@@ -21,7 +21,7 @@ def iso(t):
     return t.isoformat(timespec="seconds")
 
 
-def load_real_case():
+def load_real_case(with_dispute=True):
     """The real sandbox dispute from the author's test run (buyer address scrubbed), so a fresh host shows it. Needs an empty ledger: the pack cites ids 1..N."""
     case = json.load(open(os.path.join(os.path.dirname(os.path.abspath(__file__)), "real_case.json"), encoding="utf-8"))
     o, d = case["order"], case["dispute"]
@@ -31,6 +31,8 @@ def load_real_case():
            (o["id"], o["capture_id"], o["payer_email"], o["amount"], o["currency"], o["product"], o["created_at"]))
     for r in case["ledger"]:
         ledger.add(o["id"], r["event"], r["ip"], r["ua"], r["detail"], r["ts"])
+    if not with_dispute:
+        return True
     cols = ("id", "order_id", "capture_id", "reason", "status", "stage", "amount", "currency", "raw", "covered", "recommendation", "pack", "last_result", "source", "created_at")
     db.run("INSERT INTO disputes(%s) VALUES(%s)" % (",".join(cols), ",".join("?" * len(cols))), tuple(d[c] for c in cols))
     return True
@@ -73,7 +75,7 @@ def seed():
 if __name__ == "__main__":
     db.init()
     if "--real-only" in sys.argv:
-        print("real case loaded" if load_real_case() else "real case skipped")
+        print("real case loaded" if load_real_case("--no-dispute" not in sys.argv) else "real case skipped")
     elif "--if-empty" in sys.argv and db.one("SELECT id FROM orders LIMIT 1"):
         print("not empty, skipped")
     else:

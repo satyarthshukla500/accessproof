@@ -89,10 +89,12 @@ Sample or seeded:
 - The OpenAPI file does not describe the JSON part of `provide-evidence`. The request the app sends (an `input` part with an `evidences` list plus the PDF as `evidence-file`) was accepted for that one dispute with the evidence type PayPal listed as requested from the seller (`PROOF_OF_FULFILLMENT`). The app takes the type from the dispute's `evidences` entry with source `REQUESTED_FROM_SELLER` (unit tested with a constructed dispute). Other evidence types and dispute stages are untested.
 - The sandbox adjudicate call (`Simulate decision`) is only offered when PayPal returns the `adjudicate` link. The real dispute never had that link (its links were `self`, `accept_claim`, `send_message` and `escalate` in the latest sync), so the call is untested.
 - No email is sent. The `DELIVERY_EMAIL_LOGGED` event only records that a link was issued for the payer's address, and the evidence pack says so.
-- The ledger detects edits and deletions in the middle of a chain, but deleting the newest rows cannot be detected without storing the chain head somewhere else.
+- The ledger detects edits and deletions in the middle of a chain. The head hash is sent to PayPal with the evidence, which anchors it from then on; before filing, whoever owns the database could still rebuild the whole chain, and deleting the newest rows cannot be detected without a copy of the head held elsewhere.
 - One seller, one password, one product. The rate limit and the dispute data live in one process and one sqlite file, so this is a demo, not a multi-tenant service.
-- Free tier Gemini limits apply. On a quota or overload error the buyer gets a plain template answer from the access record and the seller sees "AI draft unavailable, try again shortly".
-- The three stat cards on the dashboard leave out seed rows.
+- Free tier Gemini limits apply. On a quota or overload error the buyer gets a plain template answer from the access record and the evidence pack is built in code from the ledger events instead (the wording that goes to PayPal is always written in code from the events the model cites).
+- The three stat cards on the dashboard leave out seed rows. "Fees avoided" is an estimate: each "That solved it" click counts as one avoided $15 dispute.
+- "Link opened" and "File downloaded" are recorded from the same download request, so they are one access, not two independent proofs.
+- The free Render disk resets on deploys and after idle time; a fresh instance starts from seed data plus the recorded real case in `scripts/real_case.json`.
 
 ## License
 

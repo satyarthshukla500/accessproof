@@ -11,6 +11,13 @@ import limits
 import paypal
 
 
+def owner(client):
+    """A browser that started the checkouts used in these tests (only that browser may complete an order)."""
+    with client.session_transaction() as s:
+        s["orders"] = ["ORD1", "ORD2", "ORD3", "ORD9", "CHEAP1"]
+    return client
+
+
 @pytest.fixture
 def ctx(tmp_path, monkeypatch):
     monkeypatch.setenv("DB_PATH", str(tmp_path / "r.db"))
@@ -18,7 +25,7 @@ def ctx(tmp_path, monkeypatch):
     db.init()
     appmod.app.config["TESTING"] = True
     limits._hits.clear()
-    return appmod, appmod.app.test_client()
+    return appmod, owner(appmod.app.test_client())
 
 
 CAPTURE = {"payer": {"email_address": "b@example.com"}, "purchase_units": [{"reference_id": "notion-kit", "payments": {"captures": [
@@ -169,7 +176,7 @@ def test_concurrent_double_capture_logs_one_purchase(ctx, monkeypatch):
     codes = []
 
     def hit():
-        codes.append(appmod.app.test_client().post("/api/orders/ORD9/capture").status_code)
+        codes.append(owner(appmod.app.test_client()).post("/api/orders/ORD9/capture").status_code)
     threads = [threading.Thread(target=hit) for _ in range(6)]
     for th in threads:
         th.start()
@@ -413,3 +420,24 @@ def test_healthz(ctx):
 def test_chat_script_posts_solved_to_a_clean_url():
     js = open(os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "static", "chat.js"), encoding="utf-8").read()
     assert 'fetch(root + "/" + id + "/solved"' in js and "?t=" not in js.split("async function solved")[1].split("}")[0]
+
+
+def test_capture_needs_the_browser_that_started_the_checkout(ctx, monkeypatch):
+    appmod, c = ctx
+    monkeypatch.setattr(paypal, "capture_order", lambda i: CAPTURE)
+    stranger = appmod.app.test_client()
+    r = stranger.post("/api/orders/ORD1/capture")  # knows the order id, but did not create it
+    assert r.status_code == 403 and db.one("SELECT id FROM orders WHERE id='ORD1'") is None
+
+
+def test_every_static_script_parses():
+    import glob
+    import shutil
+    import subprocess
+    node = shutil.which("node")
+    if not node:
+        pytest.skip("node is not installed")
+    root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+    for path in glob.glob(os.path.join(root, "static", "*.js")):
+        done = subprocess.run([node, "--check", path], capture_output=True, text=True)
+        assert done.returncode == 0, path + "\n" + done.stderr[:300]

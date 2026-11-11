@@ -36,4 +36,8 @@ def dispute_view(d, rows_by_order):
     pack = json.loads(d.get("pack") or "null")
     rows = rows_by_order.setdefault(d["order_id"], ledger.rows(d["order_id"])) if d["order_id"] else []
     events = {r["id"]: {"name": ledger.EVENT_LABELS.get(r["event"], r["event"]), "when": ledger.fmt_ts(r["ts"])} for r in rows}
-    return {"claims": pack["claims"] if pack else [], "events": events, "chain": ledger.blocks(rows)}
+    # what PayPal itself holds for the case (its evidence list from the last sync), so the seller can see the filing on PayPal's side
+    record = [{"who": "Seller" if e.get("source") == "SUBMITTED_BY_SELLER" else "Buyer", "kind": (e.get("evidence_type") or "").replace("_", " ").capitalize(),
+               "when": ledger.fmt_ts(e.get("date")), "pdf": bool(e.get("documents"))} for e in json.loads(d.get("raw") or "{}").get("evidences") or []]
+    return {"claims": pack["claims"] if pack else [], "events": events, "chain": ledger.blocks(rows), "record": record,
+            "filed": any(r["who"] == "Seller" for r in record)}

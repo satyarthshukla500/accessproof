@@ -56,7 +56,6 @@ input:focus, textarea:focus { outline: 2px solid var(--blue); outline-offset: 1p
 
 /* proof chain: the hero visual */
 .chain { width: 100%; container-type: inline-size; }
-@container (max-width: 440px) { .chain-row { gap: 8px; } .block .lbl { font-size: 11px; letter-spacing: -.01em; } .block { padding: 6px 2px; } }
 .chain-row { list-style: none; margin: 0; padding: 0; display: grid; grid-auto-flow: column; grid-auto-columns: 1fr; gap: 14px; position: relative; }
 .chain-row::before { content: ""; position: absolute; left: 6%; right: 6%; top: 42px; height: 2px; background: var(--grad); opacity: .75; }
 .chain-row::after { content: ""; position: absolute; left: 6%; right: 6%; top: 40px; height: 6px; border-radius: 6px; background: linear-gradient(90deg, transparent, var(--mint), transparent) no-repeat; background-size: 22% 100%; opacity: .9; animation: pulse 3.2s linear infinite; }
@@ -67,6 +66,7 @@ input:focus, textarea:focus { outline: 2px solid var(--blue); outline-offset: 1p
 .block.next { background: transparent; border: 1.5px dashed var(--muted); animation: none; opacity: .85; }
 .block .num { font: 700 13px "JetBrains Mono", monospace; color: var(--ink); } .block .lbl { font-size: 13px; font-weight: 600; color: var(--ink); }
 .block .tm { font: 500 11px "JetBrains Mono", monospace; color: var(--muted); }
+@container (max-width: 440px) { .chain-row { gap: 8px; } .block .lbl { font-size: 11px; letter-spacing: -.01em; } .block { padding: 6px 2px; } }
 .verified { display: flex; align-items: center; gap: 8px; margin-top: 16px; font-size: 13px; font-weight: 600; color: var(--teal); }
 
 /* buyer: store */
@@ -171,3 +171,6 @@ input:focus, textarea:focus { outline: 2px solid var(--blue); outline-offset: 1p
   .product { grid-template-columns: 88px 1fr; } .cover { width: 88px; height: 117px; } .success { padding: 28px 20px; }
   .help-pill { right: 16px; bottom: 16px; } .help-pill span { display: none; }
 }
+#paypal-button iframe { color-scheme: light; }
+@media (max-width: 900px) { .qf { height: 44px; } }
+@media (max-width: 520px) { #tools { flex-wrap: nowrap; } .qf { flex: 1; width: auto; min-width: 0; } }

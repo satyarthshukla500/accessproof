@@ -86,5 +86,5 @@ const Grids = (() => {
     Object.keys(grids).forEach((name) => { track(name); grids[name].setGridOption("rowData", data[name]); });
   }
 
-  return { make, refresh, filter: (n, text) => grids[n] && grids[n].setGridOption("quickFilterText", text), csv: (n) => grids[n] && grids[n].exportDataAsCsv({ fileName: "accessproof-" + n + ".csv" }) };
+  return { make, refresh, filter: (n, text) => grids[n] && grids[n].setGridOption("quickFilterText", text), csv: (n) => grids[n] && grids[n].exportDataAsCsv({ fileName: "accessproof-" + n + ".csv", processCellCallback: (p) => (["=", "+", "-", "@", "\t", "\r"].includes(String(p.value == null ? "" : p.value).charAt(0)) ? "'" + p.value : p.value) }) };
 })();

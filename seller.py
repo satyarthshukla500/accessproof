@@ -46,9 +46,10 @@ def reply(ok, message, code=200):
 @bp.route("/login", methods=["GET", "POST"])
 def login():
     error = ""
-    key = "login:" + (request.remote_addr or "")
+    ip = request.remote_addr or ""
+    key = "login:" + (":".join(ip.split(":")[:4]) if ":" in ip else ip)  # an IPv6 user is one /64, not 2^64 addresses
     if request.method == "POST":
-        if limits.count(key) >= 5 or limits.count("login:all") >= 300:  # failed attempts only, per address and overall
+        if limits.count(key) >= 5:  # failed attempts only; per address, so strangers cannot lock the seller out
             return render_template("login.html", error="Too many attempts. Try again later."), 429
         wanted = os.environ.get("SELLER_PASSWORD", "")
         if wanted and hmac.compare_digest(request.form.get("password", "").encode(), wanted.encode()):
@@ -56,7 +57,6 @@ def login():
             session.update(seller=True, csrf=secrets.token_hex(16), t=time.time(), sid=secrets.token_hex(8))
             return redirect("/dashboard")
         limits.add(key)
-        limits.add("login:all")
         error = "Wrong password"
     return render_template("login.html", error=error)
 
@@ -94,7 +94,7 @@ def data():
                  can_offer=d["stage"] == "INQUIRY" and d["source"] == "paypal" and d["status"] == "WAITING_FOR_SELLER_RESPONSE")
     # demo rows (source=seed) are left out so the cards only show real and sample activity
     stats = {"deflected": db.one("SELECT COUNT(*) n FROM help_requests WHERE outcome='deflected' AND source!='seed'")["n"],
-             "filed": db.one("SELECT COUNT(*) n FROM disputes WHERE last_result LIKE 'Evidence submitted%' AND source!='seed'")["n"]}
+             "filed": db.one("SELECT COUNT(*) n FROM disputes WHERE (last_result LIKE 'Evidence submitted%' OR raw LIKE '%SUBMITTED_BY_SELLER%') AND source!='seed'")["n"]}
     stats["fees"] = stats["deflected"] * FEE
     stats["refunds"] = db.one("SELECT COUNT(*) n FROM ledger l JOIN orders o ON o.id=l.order_id WHERE l.event='REFUND_APPROVED' AND o.source!='seed'")["n"]
     return jsonify(stats=stats, orders=[dict(o, chain=chain[o["id"]], when=ledger.fmt_ts(o["created_at"])) for o in orders],

@@ -117,3 +117,10 @@ def test_injection_variants_are_caught(text):
 @pytest.mark.parametrize("text", ["I never got my download", "I paid $29 and the link does not open", "Could I get a refund please?", "The guide is not what I expected"])
 def test_normal_messages_are_not_flagged(text):
     assert not assistant.looks_like_injection(text)
+
+
+def test_refunded_order_gets_no_fresh_link(order, monkeypatch):
+    ledger.add("o1", "REFUND_APPROVED", "1.1.1.1", "ua")
+    monkeypatch.setattr(assistant, "call_model", lambda s, u: good(cited_event_ids=[1]))
+    r = assistant.handle_help(order, "I never got it", "tok")
+    assert r["action"] == "NONE" and r["link"] is None and "refunded" in r["reply"]

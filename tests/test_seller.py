@@ -6,6 +6,8 @@ from reportlab import rl_config
 import db
 import evidence
 import ledger
+import limits
+import paypal
 
 
 @pytest.fixture
@@ -14,6 +16,7 @@ def client(tmp_path, monkeypatch):
     monkeypatch.setenv("SELLER_PASSWORD", "pw-test")
     import app as appmod
     db.init()
+    limits._hits.clear()
     appmod.app.config["TESTING"] = True
     c = appmod.app.test_client()
     return c
@@ -272,3 +275,51 @@ def test_seller_session_expires(client, monkeypatch):
     assert client.get("/api/data").status_code == 200
     monkeypatch.setattr(time, "time", lambda: 1e10)
     assert client.get("/api/data").status_code == 302
+
+
+def test_sample_dispute_is_loaded_once_per_kind(client):
+    csrf = login(client)
+    add_order()
+    first = client.post("/seller/disputes/sample", headers={"X-CSRF": csrf}).get_json()
+    again = client.post("/seller/disputes/sample", headers={"X-CSRF": csrf}).get_json()
+    snad = client.post("/seller/disputes/sample?reason=snad", headers={"X-CSRF": csrf}).get_json()
+    assert first["message"].startswith("Sample dispute added") and again["message"] == "That sample is already loaded"
+    assert snad["message"].startswith("Sample dispute added")
+    assert db.one("SELECT COUNT(*) n FROM disputes")["n"] == 2
+
+
+def test_refund_request_id_is_unique_per_capture(client, monkeypatch):
+    import paypal
+    keys = []
+    monkeypatch.setattr(paypal, "refund", lambda cap, amt, note, rid: keys.append(rid) or {"id": "R", "status": "COMPLETED"})
+    csrf = login(client)
+    add_order()
+    rid = db.run("INSERT INTO refund_requests(order_id,amount) VALUES('o1','29.00')")
+    client.post("/seller/refund/%d/approve" % rid, headers={"X-CSRF": csrf})
+    assert keys == ["refund-%d-cap1" % rid]  # a database that restarts its ids cannot reuse an old PayPal-Request-Id
+
+
+def test_logout_revokes_a_copied_cookie(client):
+    login(client)
+    with client.session_transaction() as s:
+        copied = dict(s)
+    client.post("/logout", headers={"X-CSRF": copied["csrf"]})
+    with client.session_transaction() as s:
+        s.update(copied)  # replay the cookie from before the logout
+    assert client.get("/api/data").status_code in (302, 401)
+
+
+def test_login_is_limited_overall_not_only_per_address(client):
+    for _ in range(30):
+        limits.add("login:all")
+    assert client.post("/login", data={"password": "pw-test"}).status_code == 429
+
+
+def test_second_refund_for_an_order_is_refused(client, monkeypatch):
+    monkeypatch.setattr(paypal, "refund", lambda *a: {"id": "R", "status": "COMPLETED"})
+    csrf = login(client)
+    add_order()
+    first = db.run("INSERT INTO refund_requests(order_id,amount) VALUES('o1','29.00')")
+    second = db.run("INSERT INTO refund_requests(order_id,amount) VALUES('o1','29.00')")
+    assert client.post("/seller/refund/%d/approve" % first, headers={"X-CSRF": csrf}).status_code == 200
+    assert client.post("/seller/refund/%d/approve" % second, headers={"X-CSRF": csrf}).status_code == 409

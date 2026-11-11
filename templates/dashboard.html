@@ -1,12 +1,12 @@
 {% extends "base.html" %}
 {% from "_ui.html" import brand, icon %}
 {% block title %}Command center · AccessProof{% endblock %}
-{% block bodyclass %}dark app-body{% endblock %}
+{% block bodyclass %}app-body{% endblock %}
 {% block head %}
-<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/ag-grid-community@32.3.3/styles/ag-grid.css">
-<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/ag-grid-community@32.3.3/styles/ag-theme-quartz.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/ag-grid-community@32.3.3/styles/ag-grid.css" integrity="sha384-gIsz6JTVbF5eW0CcuAljKL2kOE400G4TjBH3CBtGXjf8BkjmC5x9jp4Y+bYa7HKA" crossorigin="anonymous">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/ag-grid-community@32.3.3/styles/ag-theme-quartz.css" integrity="sha384-bH6bJyGdKmdCV+hlDWtv+dVLH5shFT5aKgGRKceh40t3vt171XksCejZ5ebqZVn0" crossorigin="anonymous">
 <link rel="stylesheet" href="{{ url_for('static', filename='dash.css') }}">
-<script src="https://cdn.jsdelivr.net/npm/ag-grid-community@32.3.3/dist/ag-grid-community.min.js" defer></script>
+<script src="https://cdn.jsdelivr.net/npm/ag-grid-community@32.3.3/dist/ag-grid-community.min.js" integrity="sha384-OEiOpwgvTUxOUC72SwfU8zDqZrWBwr0YNPNhovPbjCxdaTD0cLxMHBew/o8zuRln" crossorigin="anonymous" defer></script>
 <script src="{{ url_for('static', filename='dashboard.js') }}" defer></script>
 <script src="{{ url_for('static', filename='grids.js') }}" defer></script>
 {% endblock %}
@@ -15,10 +15,10 @@
   <aside class="side" data-overlap-ok>
     {{ brand(30) }}
     <nav class="nav" aria-label="Sections">
-      <a id="tab-overview" href="#overview" class="on">{{ icon("grid") }}<span>Command center</span></a>
+      <a id="tab-overview" href="#overview" class="on">{{ icon("grid") }}<span>Command<span class="lg"> center</span></span></a>
       <a id="tab-orders" href="#orders">{{ icon("bag") }}<span>Orders</span></a>
-      <a id="tab-ledger" href="#ledger">{{ icon("link") }}<span>Proof chains</span></a>
-      <a id="tab-help" href="#help">{{ icon("chat") }}<span>Support chats</span></a>
+      <a id="tab-ledger" href="#ledger">{{ icon("link") }}<span>Proof<span class="lg"> chains</span></span></a>
+      <a id="tab-help" href="#help">{{ icon("chat") }}<span>Support<span class="lg"> chats</span></span></a>
       <a id="tab-disputes" href="#disputes">{{ icon("alert") }}<span>Disputes</span></a>
     </nav>
     <div class="side-foot">
@@ -30,9 +30,11 @@
     <header class="bar">
       <div><p class="eyebrow" id="eyebrow">Command center</p><h1 id="title">Every sale, provable.</h1></div>
       <div class="bar-actions">
-        <button class="btn sm ghost" id="sync" type="button">Sync disputes</button>
-        <button class="btn sm ghost" id="sample" type="button">Load sample dispute</button>
-        <button class="btn sm ghost" id="sample-snad" type="button">Sample not-as-described</button>
+        <div class="acts" id="actions">
+          <button class="btn sm ghost" id="sync" type="button">Sync disputes</button>
+          <button class="btn sm ghost" id="sample" type="button">Load sample dispute</button>
+          <button class="btn sm ghost" id="sample-snad" type="button">Sample not-as-described</button>
+        </div>
         <form class="mobile-only" method="post" action="/logout"><input type="hidden" name="csrf" value="{{ csrf }}"><button class="btn sm ghost" type="submit">Log out</button></form>
       </div>
     </header>
@@ -52,6 +54,6 @@
 </div>
 <div class="scrim" id="scrim"></div>
 <aside class="drawer" id="drawer" aria-hidden="true" aria-label="Dispute details"></aside>
-<dialog id="confirm"><form method="dialog"><p id="confirm-text"></p><div class="acts"><button class="btn sm ghost" value="no">Cancel</button><button class="btn sm" value="yes">Confirm</button></div></form></dialog>
+<dialog id="confirm"><form method="dialog"><p id="confirm-text"></p><div class="acts"><button class="btn sm ghost" value="no">Cancel</button><button class="btn sm" id="confirm-yes" value="yes">Confirm</button></div></form></dialog>
 <div class="toasts" id="toasts" aria-live="polite"></div>
 {% endblock %}

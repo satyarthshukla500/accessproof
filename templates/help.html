@@ -28,7 +28,7 @@
         <div class="bubble">{{ h.reply }}</div>
         {% if h.events %}<ul class="receipts">{% for e in h.events %}<li><span>{{ e.name }}</span><span class="mono">#{{ e.id }} · {{ e.when }}</span></li>{% endfor %}</ul>{% endif %}
         {% if h.outcome == 'refund_pending' %}<p class="small muted">I've passed a refund request to the seller. A refund only happens if the seller approves it.</p>{% endif %}
-        {% if h.outcome in ('resent', 'open', 'refund_pending') %}<div class="acts">
+        {% if loop.last and h.outcome in ('resent', 'open', 'refund_pending') %}<div class="acts">
           {% if h.action == 'RESEND' %}<a class="btn sm" href="/d/{{ token }}">Download again</a>{% endif %}
           {% if h.outcome in ('resent', 'open') %}<button class="btn sm ghost solved" type="button" data-id="{{ h.id }}">That solved it</button>{% endif %}
         </div>{% endif %}

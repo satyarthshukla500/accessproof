@@ -45,9 +45,10 @@ function toast(text, bad) {
   setTimeout(() => t.remove(), 4200);
 }
 
-function ask(text) {
+function ask(text, label) {
   const d = $("confirm");
   $("confirm-text").textContent = text;
+  $("confirm-yes").textContent = label || "Confirm";
   d.showModal();
   return new Promise((done) => d.addEventListener("close", () => done(d.returnValue === "yes"), { once: true }));
 }
@@ -70,7 +71,7 @@ function actButton(label, url, confirmText, cls) {
   b.type = "button";
   b.addEventListener("click", async (e) => {
     e.stopPropagation();
-    if (confirmText && !(await ask(confirmText))) return;
+    if (confirmText && !(await ask(confirmText, label))) return;
     act(url, b);
   });
   return b;
@@ -110,8 +111,8 @@ function countUp(node, to, prefix) {
   requestAnimationFrame(step);
 }
 
-const STATS = [["deflected", "Disputes deflected", "", "buyer clicked “That solved it”"], ["fees", "Est. fees avoided", "$", "est. at US standard dispute fee ($15)"],
-  ["filed", "Evidence packs filed", "", "sent to PayPal with provide-evidence"], ["refunds", "Refunds approved", "", "approved by you, paid through PayPal"]];
+const STATS = [["deflected", "Disputes deflected", "", "buyer clicked “That solved it”"], ["fees", "Est. fees avoided", "$", "at the $15 US dispute fee"],
+  ["filed", "Evidence packs filed", "", "sent to PayPal as evidence"], ["refunds", "Refunds approved", "", "approved by you, paid through PayPal"]];
 
 function renderStats() {
   const box = $("stats");
@@ -143,7 +144,7 @@ function renderHero() {
   claims.type = "button";
   claims.addEventListener("click", () => openDrawer(d.id));
   acts.append(claims);
-  box.append(meta, el("h2", "", "“I never received it” → answered with proof." + (submitted(d) ? " Evidence accepted by PayPal." : "")), chainEl(d.chain));
+  box.append(meta, el("h2", "", "“I never received it” → answered with proof." + (submitted(d) ? " Evidence filed with PayPal and accepted (HTTP 200)." : "")), chainEl(d.chain));
   if (d.summary) box.append(el("p", "muted", d.summary));
   box.append(acts);
 }
@@ -151,8 +152,8 @@ function renderHero() {
 function renderLists() {
   const feed = $("feed");
   feed.replaceChildren();
-  if (!data.feed.length) feed.append(el("li", "muted", "Nothing yet. Buy the product to start the chain."));
-  data.feed.forEach((f) => {
+  if (!data.feed.length) feed.append(el("li", "none", "Nothing yet. Buy the guide in the store to start the chain."));
+  data.feed.slice(0, 7).forEach((f) => {
     const li = el("li");
     const body = el("div");
     body.append(el("b", "", f.text), el("span", "when", f.when));
@@ -161,6 +162,7 @@ function renderLists() {
   });
   const tl = $("timeline");
   tl.replaceChildren();
+  if (!data.timeline.length) tl.append(el("li", "none", "No proof events yet."));
   data.timeline.forEach((t) => {
     const li = el("li");
     li.append(el("span", "mono", "#" + t.id + " "), el("span", "", t.name + " · " + t.when));
@@ -174,6 +176,8 @@ function show(name) {
   document.querySelectorAll(".panel").forEach((p) => p.classList.toggle("on", p.id === "panel-" + name));
   $("eyebrow").textContent = VIEWS[name][0];
   $("title").textContent = VIEWS[name][1];
+  $("actions").hidden = !["overview", "disputes"].includes(name);
+  document.querySelector(".mobile-only").hidden = name !== "overview";
   if (name !== "overview" && data) Grids.make(name);
   if (location.hash !== "#" + name) history.replaceState(null, "", "#" + name);
 }
@@ -207,7 +211,7 @@ function renderDrawer() {
   d.claims.forEach((c) => {
     const row = el("div", "claim");
     const evs = el("div", "evs");
-    c.event_ids.forEach((id) => { const e = d.events[id]; evs.append(el("span", "ev", "#" + id + " · " + (e ? e.name + " · " + e.when : "event"))); });
+    c.event_ids.forEach((id) => { const e = d.events[id]; { const text = el("span", "", "#" + id + " · " + (e ? e.name + " · " : "event")); if (e) text.append(el("time", "", e.when)); const chip = el("span", "ev"); chip.append(text); evs.append(chip); } });
     row.append(el("p", "", c.text), evs);
     list.append(row);
   });
@@ -263,7 +267,8 @@ document.addEventListener("keydown", (e) => { if (e.key === "Escape" && openId) 
 $("sync").addEventListener("click", (e) => act("/seller/disputes/sync", e.currentTarget));
 $("sample").addEventListener("click", (e) => act("/seller/disputes/sample", e.currentTarget));
 $("sample-snad").addEventListener("click", (e) => act("/seller/disputes/sample?reason=snad", e.currentTarget));
-window.addEventListener("load", async () => {
+window.addEventListener("hashchange", () => show(location.hash.slice(1)));
+document.addEventListener("DOMContentLoaded", async () => {
   await load();
   show((location.hash || "#overview").slice(1));
 });

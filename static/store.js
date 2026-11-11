@@ -12,7 +12,7 @@ async function start() {
   s.src = "https://www.paypal.com/sdk/js?client-id=" + encodeURIComponent(cfg.client_id) + "&currency=USD&intent=capture&disable-funding=card,credit,paylater,venmo";
   s.onload = () => paypal.Buttons({
     fundingSource: paypal.FUNDING.PAYPAL,
-    style: { layout: "horizontal", color: "gold", shape: "rect", label: "paypal", height: 48, tagline: false },
+    style: { layout: "horizontal", color: "blue", shape: "rect", label: "paypal", height: 48, tagline: false },
     createOrder: async () => {
       const o = await post("/api/orders");
       if (!o.id) throw new Error(o.error || "order failed");

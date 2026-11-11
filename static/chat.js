@@ -44,13 +44,14 @@ async function solved(id, box) {
 }
 
 function reply(r) {
+  msgs.querySelectorAll(".acts").forEach((a) => a.remove());  // buttons only on the latest answer
   const kids = [el("div", "bubble", r.reply)];
   if (r.events && r.events.length) kids.push(receipts(r.events));
   if (r.refund) kids.push(el("p", "small muted", "I've passed a refund request to the seller. A refund only happens if the seller approves it."));
   const acts = el("div", "acts");
   if (r.link) { const a = el("a", "btn sm", "Download again"); a.href = r.link; acts.append(a); }
-  if (r.outcome === "resent" || r.outcome === "open") acts.append(button("That solved it", "ghost", () => solved(r.id, acts)));
-  if (!r.flagged && !r.refund) acts.append(button("Request refund from seller", "ghost", () => send("I'd like a refund, please pass this to the seller.")));
+  if (r.outcome === "resent" || r.outcome === "open") acts.append(button("That solved it", "ghost solved", () => solved(r.id, acts)));
+  if (!r.flagged && !r.refund && ["NOT_RECEIVED", "CANT_OPEN", "WANTS_REFUND", "NOT_AS_DESCRIBED"].includes(r.intent)) acts.append(button("Request refund from seller", "ghost", () => send("I'd like a refund, please pass this to the seller.")));
   if (acts.children.length) kids.push(acts);
   add("bot", ...kids);
 }

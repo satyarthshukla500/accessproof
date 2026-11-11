@@ -20,7 +20,7 @@ def ctx(tmp_path, monkeypatch):
     return appmod, appmod.app.test_client()
 
 
-CAPTURE = {"payer": {"email_address": "b@example.com"}, "purchase_units": [{"payments": {"captures": [
+CAPTURE = {"payer": {"email_address": "b@example.com"}, "purchase_units": [{"reference_id": "notion-kit", "payments": {"captures": [
     {"id": "CAP1", "status": "COMPLETED", "amount": {"value": "29.00", "currency_code": "USD"}}]}}]}
 
 
@@ -349,3 +349,43 @@ def test_pages_show_the_proof_chain(ctx, monkeypatch):
     assert "Hash chain verified" in store and "Paid" in store and "example" not in store.split("Live proof chain")[1][:40]
     success = c.get("/success/ORD1").data.decode()
     assert "Your proof chain so far" in success and "Link sent" in success and "next" in success
+
+
+def test_chat_buttons_only_on_the_latest_answer(ctx, monkeypatch):
+    appmod, c = bought(ctx, monkeypatch)
+    monkeypatch.setattr(assistant, "call_model", lambda s, u: good_json(intent="CANT_OPEN", suggested_action="RESEND", cited_event_ids=[1]))
+    chat(c, "first")
+    chat(c, "second")
+    page = c.get("/order/ORD1/help").data.decode()
+    assert page.count("Download again") == 1 and page.count("That solved it") == 1
+
+
+def order(oid, source="real", age="0 day"):
+    db.run("INSERT INTO orders(id,capture_id,payer_email,amount,currency,product,created_at,source) VALUES(?,?,?,?,?,?,datetime('now',?),?)",
+           (oid, "CAP-" + oid, "b@example.com", "29.00", "USD", "notion-kit", "-" + age, source))
+
+
+def test_seed_and_stale_orders_have_no_buyer_pages(ctx):
+    appmod, c = ctx
+    order("SEED-ORDER-01", source="seed")
+    order("OLD1", age="8 day")
+    for oid in ("SEED-ORDER-01", "OLD1"):
+        assert c.get("/success/" + oid).status_code == 404 and c.get("/order/%s/help" % oid).status_code == 404
+    assert c.get("/d/" + appmod.sign("SEED-ORDER-01")).status_code == 403
+
+
+def test_refunded_order_cannot_download(ctx):
+    appmod, c = ctx
+    order("PAID1")
+    assert c.get("/d/" + appmod.sign("PAID1")).status_code == 200
+    ledger.add("PAID1", "REFUND_APPROVED", "1.2.3.4", "ua")
+    assert c.get("/d/" + appmod.sign("PAID1")).status_code == 403
+
+
+def test_capture_of_a_different_amount_is_refused(ctx, monkeypatch):
+    appmod, c = ctx
+    cheap = {"payer": CAPTURE["payer"], "purchase_units": [{"reference_id": "notion-kit", "payments": {"captures": [
+        {"id": "CAP9", "status": "COMPLETED", "amount": {"value": "0.01", "currency_code": "USD"}}]}}]}
+    monkeypatch.setattr(paypal, "capture_order", lambda i: cheap)
+    assert c.post("/api/orders/CHEAP1/capture").status_code == 400
+    assert db.one("SELECT id FROM orders WHERE id='CHEAP1'") is None

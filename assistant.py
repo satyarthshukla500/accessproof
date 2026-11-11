@@ -33,6 +33,7 @@ HELP_SYSTEM = (
     "Return only JSON: {\"intent\": NOT_RECEIVED|CANT_OPEN|WANTS_REFUND|NOT_AS_DESCRIBED|OTHER, "
     "\"reply\": short friendly text for the buyer, \"cited_event_ids\": [ids of events you rely on], "
     "\"suggested_action\": RESEND (send a fresh link) | OFFER_REFUND (ask the seller for a goodwill refund) | NONE}. "
+    "Download links expire 7 days after they are issued. Do not start with a greeting; answer directly. "
     "If the buyer says they did not receive the file, cite the events that show delivery or download."
 )
 
@@ -171,12 +172,14 @@ def handle_help(order, message, token):
             res = ask(HELP_SYSTEM, user, lambda t: validate_help(t, ids))
         except (ModelUnavailable, ValueError):
             res, fallback = template_reply(rows), True
+    if res["action"] == "RESEND" and any(r["event"] == "REFUND_APPROVED" for r in rows):  # the link is dead after a refund, so do not offer one
+        res.update(action="NONE", reply=res["reply"].replace(" Here is a fresh download link.", "") + " This order was refunded, so the download link is no longer active.")
     flagged = injected or fallback or res["intent"] == "WANTS_REFUND"
     outcome = "escalated" if injected else {"RESEND": "resent", "OFFER_REFUND": "refund_pending"}.get(res["action"], "open")
     help_id = db.run("INSERT INTO help_requests(order_id,message,intent,reply,action,cited,flagged,outcome,created_at) "
                      "VALUES(?,?,?,?,?,?,?,?,datetime('now'))",
                      (order["id"], message, res["intent"], res["reply"], res["action"], json.dumps(res["cited"]), int(flagged), outcome))
-    if res["action"] == "OFFER_REFUND" and not db.one("SELECT id FROM refund_requests WHERE order_id=? AND status IN ('pending','approved')", (order["id"],)):
+    if res["action"] == "OFFER_REFUND" and not db.one("SELECT id FROM refund_requests WHERE order_id=? AND status IN ('pending','approved','failed')", (order["id"],)):
         db.run("INSERT INTO refund_requests(order_id,help_id,amount,created_at) VALUES(?,?,?,datetime('now'))", (order["id"], help_id, order["amount"]))
     res.update(id=help_id, flagged=flagged, fallback=fallback, outcome=outcome, refund=res["action"] == "OFFER_REFUND",
                link="/d/" + token if res["action"] == "RESEND" else None,

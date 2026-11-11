@@ -5,7 +5,7 @@
 <section class="card success rise">
   <div class="check" data-overlap-ok><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12l4 4 10-10"/></svg></div>
   <h1>Payment received</h1>
-  <p class="muted">{{ product.title }} · ${{ order.amount }} {{ order.currency }}</p>
+  <p class="muted">{{ product.title }} · ${{ order.amount }}&nbsp;{{ order.currency }}</p>
   <p class="small muted">Order <code>{{ order.id }}</code><br>PayPal capture <code>{{ order.capture_id }}</code></p>
   <a class="btn big" id="download" href="{{ link }}">{{ icon("download") }}Download your file</a>
   <p class="small muted">Your link is signed and expires in 7 days. We record when it is opened and used.</p>

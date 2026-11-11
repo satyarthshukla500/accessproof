@@ -46,10 +46,14 @@ def upsert_dispute(raw, source="paypal"):
 
 def make_sample(order, snad):
     """Adds a dispute shaped like PayPal's response for an existing order; it is marked sample and never sent to PayPal."""
+    reason = "MERCHANDISE_OR_SERVICE_NOT_AS_DESCRIBED" if snad else "MERCHANDISE_OR_SERVICE_NOT_RECEIVED"
+    if db.one("SELECT id FROM disputes WHERE source='sample' AND reason=? AND order_id=?", (reason, order["id"])):
+        return False  # one sample of each kind per order is enough
     n = db.one("SELECT COUNT(*) n FROM disputes WHERE source='sample'")["n"] + 1
     upsert_dispute({
         "dispute_id": "SAMPLE-D-%04d" % n,
-        "reason": "MERCHANDISE_OR_SERVICE_NOT_AS_DESCRIBED" if snad else "MERCHANDISE_OR_SERVICE_NOT_RECEIVED",
+        "reason": reason,
         "status": "WAITING_FOR_SELLER_RESPONSE", "dispute_life_cycle_stage": "INQUIRY",
         "dispute_amount": {"currency_code": order["currency"], "value": order["amount"]},
         "disputed_transactions": [{"seller_transaction_id": order["capture_id"]}], "links": []}, "sample")
+    return True

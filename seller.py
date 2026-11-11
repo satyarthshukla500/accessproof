@@ -23,10 +23,13 @@ SESSION_SECONDS = 8 * 3600
 FEE = 15  # est. US standard dispute fee, USD
 
 
+_revoked = set()  # session ids that logged out: a copied cookie stops working at once
+
+
 def login_required(view):
     @wraps(view)
     def wrapper(*a, **kw):
-        if not session.get("seller") or time.time() - session.get("t", 0) > SESSION_SECONDS:
+        if not session.get("seller") or session.get("sid") in _revoked or time.time() - session.get("t", 0) > SESSION_SECONDS:
             return (jsonify(error="Please log in"), 401) if request.method != "GET" else redirect("/login")
         if request.method == "POST":
             sent = request.headers.get("X-CSRF") or request.form.get("csrf", "")
@@ -45,14 +48,15 @@ def login():
     error = ""
     key = "login:" + (request.remote_addr or "")
     if request.method == "POST":
-        if limits.count(key) >= 5:  # failed attempts only
+        if limits.count(key) >= 5 or limits.count("login:all") >= 30:  # failed attempts only, per address and overall
             return render_template("login.html", error="Too many attempts. Try again later."), 429
         wanted = os.environ.get("SELLER_PASSWORD", "")
         if wanted and hmac.compare_digest(request.form.get("password", "").encode(), wanted.encode()):
             session.clear()
-            session.update(seller=True, csrf=secrets.token_hex(16), t=time.time())
+            session.update(seller=True, csrf=secrets.token_hex(16), t=time.time(), sid=secrets.token_hex(8))
             return redirect("/dashboard")
         limits.add(key)
+        limits.add("login:all")
         error = "Wrong password"
     return render_template("login.html", error=error)
 
@@ -60,6 +64,7 @@ def login():
 @bp.post("/logout")
 @login_required
 def logout():
+    _revoked.add(session.get("sid"))
     session.clear()
     return redirect("/login")
 
@@ -105,10 +110,12 @@ def approve_refund(rid):
     rr = db.one("SELECT r.*, o.capture_id, o.source FROM refund_requests r JOIN orders o ON o.id=r.order_id WHERE r.id=?", (rid,))
     if not rr or rr["status"] not in ("pending", "failed"):
         return reply(False, "Refund request not found or already handled", 404)
+    if db.one("SELECT id FROM refund_requests WHERE order_id=? AND status='approved'", (rr["order_id"],)):
+        return reply(False, "This order was already refunded", 409)
     if rr["source"] != "real":
         return reply(False, "Demo order: it has no real PayPal capture", 400)
     try:
-        res = paypal.refund(rr["capture_id"], rr["amount"], "Goodwill refund approved by the seller", "refund-%d" % rid)
+        res = paypal.refund(rr["capture_id"], rr["amount"], "Goodwill refund approved by the seller", "refund-%d-%s" % (rid, rr["capture_id"]))
     except paypal.PayPalError:
         log.exception("refund failed")
         db.run("UPDATE refund_requests SET status='failed' WHERE id=?", (rid,))
@@ -138,7 +145,8 @@ def sample():
     order = db.one("SELECT * FROM orders ORDER BY (source='real') DESC, created_at DESC LIMIT 1")
     if not order:
         return reply(False, "No order to attach a sample dispute to", 400)
-    make_sample(order, request.values.get("reason") == "snad")
+    if not make_sample(order, request.values.get("reason") == "snad"):
+        return reply(True, "That sample is already loaded")
     return reply(True, "Sample dispute added (not from PayPal)")
 
 

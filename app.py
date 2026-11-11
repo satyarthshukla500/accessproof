@@ -42,7 +42,10 @@ app.jinja_env.filters["eventname"] = lambda e: ledger.EVENT_LABELS.get(e, e)
 
 @app.after_request
 def headers(resp):
-    resp.headers.update({"X-Frame-Options": "DENY", "X-Content-Type-Options": "nosniff", "Referrer-Policy": "same-origin"})
+    resp.headers.update({"X-Frame-Options": "DENY", "X-Content-Type-Options": "nosniff", "Referrer-Policy": "same-origin",
+                        "Permissions-Policy": "camera=(), microphone=(), geolocation=()"})
+    if os.environ.get("PRODUCTION"):
+        resp.headers["Strict-Transport-Security"] = "max-age=31536000; includeSubDomains"
     if request.path.startswith(("/dashboard", "/api/data", "/seller")):
         resp.headers["Cache-Control"] = "no-store"
     return resp
@@ -128,9 +131,13 @@ def capture(order_id):
             if e.status != 422 or "ORDER_ALREADY_CAPTURED" not in str(e.body):
                 raise
             o = paypal.get_order(order_id)  # double click or retry: the buyer already paid
-        cap = o["purchase_units"][0]["payments"]["captures"][0]
+        unit = o["purchase_units"][0]
+        cap = unit["payments"]["captures"][0]
         if cap["status"] != "COMPLETED":
             raise ValueError("capture status " + cap["status"])
+        if (unit.get("reference_id"), cap["amount"]["value"], cap["amount"]["currency_code"]) != (PRODUCT["id"], PRODUCT["price"], "USD"):
+            log.warning("capture %s does not match the product", order_id)
+            return jsonify(error="This payment does not match the product"), 400
     except (paypal.PayPalError, KeyError, ValueError, IndexError, TypeError):
         log.exception("capture failed")
         return jsonify(error="Payment could not be completed"), 502
@@ -142,11 +149,17 @@ def capture(order_id):
     return jsonify(ok=True, redirect="/success/" + order_id)
 
 
-@app.get("/success/<order_id>")
-def success(order_id):
-    order = db.one("SELECT * FROM orders WHERE id=?", (order_id,))
+def buyer_order(order_id):
+    """A real order inside the link lifetime; seed rows, sample rows and stale orders have no buyer pages."""
+    order = db.one("SELECT * FROM orders WHERE id=? AND source='real' AND created_at > datetime('now', ?)", (order_id, "-%d day" % TOKEN_DAYS))
     if not order:
         abort(404)
+    return order
+
+
+@app.get("/success/<order_id>")
+def success(order_id):
+    order = buyer_order(order_id)
     if not any(r["event"] == "DELIVERY_EMAIL_LOGGED" for r in ledger.rows(order_id)):
         log_event(order_id, "DELIVERY_EMAIL_LOGGED", {"to": order["payer_email"], "note": "download link issued; no email service is connected"})
     rows = ledger.rows(order_id)
@@ -157,9 +170,9 @@ def success(order_id):
 @app.get("/d/<token>")
 def download(token):
     order_id = check(token)
-    if not order_id or not db.one("SELECT id FROM orders WHERE id=?", (order_id,)):
+    if not order_id or not db.one("SELECT id FROM orders WHERE id=? AND source='real'", (order_id,))             or db.one("SELECT id FROM ledger WHERE order_id=? AND event='REFUND_APPROVED'", (order_id,)):
         return render_template("message.html", title="Link not valid",
-                               text="This download link is invalid or has expired."), 403
+                               text="This download link is invalid, has expired, or the order was refunded."), 403
     if request.method == "GET" and os.path.exists(PRODUCT["file"]):  # link scanners send HEAD
         log_event(order_id, "LINK_OPENED")
         log_event(order_id, "FILE_DOWNLOADED")
@@ -174,9 +187,7 @@ def chat_view(row, rows_by_id):
 
 @app.route("/order/<order_id>/help", methods=["GET", "POST"])
 def help_page(order_id):
-    order = db.one("SELECT * FROM orders WHERE id=?", (order_id,))
-    if not order:
-        abort(404)
+    order = buyer_order(order_id)
     wants_json = request.is_json
     if request.method == "POST":
         if limits.rate_limited("help:" + client_ip()):

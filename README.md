@@ -18,7 +18,7 @@ Most small sellers never record any of this, so they cannot prove anything.
 ## How it works
 
 1. **Capture.** The buyer pays with the PayPal button (Orders v2 create and capture). The app gives them a signed download link that expires in 7 days. Every step (purchase captured, link issued, link opened, file downloaded) goes into an append-only ledger with time, IP and user agent. Each row stores the hash of the row before it, so editing an old row breaks the chain.
-2. **Deflect.** The order page has a "Problem with your order?" assistant. The buyer's message and that order's ledger rows go to Gemini, which answers with the buyer's own access record and can re-send a link. It can also suggest a goodwill refund, but nothing is refunded until the seller clicks Approve in the dashboard (Refunds API). Buyer text is treated as untrusted. Any event ids the reply cites must exist for that order, and a reply to a not-received complaint must cite at least one, otherwise it is thrown away. If the buyer clicks "That solved it", the dashboard counts one deflected dispute and an estimated $15 fee avoided.
+2. **Deflect.** The order page has a chat assistant (a greeting, three quick replies, a typing indicator, and cited event chips on each answer; it keeps the conversation going over several turns). The buyer's message and that order's ledger rows go to Gemini, which answers with the buyer's own access record and can re-send a link. It can also suggest a goodwill refund, but nothing is refunded until the seller clicks Approve in the dashboard (Refunds API). Buyer text is treated as untrusted. Any event ids the reply cites must exist for that order, and a reply to a not-received complaint must cite at least one, otherwise it is thrown away. If the buyer clicks "That solved it", the dashboard counts one deflected dispute and an estimated $15 fee avoided.
 3. **Defend.** Disputes come in through the Disputes API (sync button) or the `CUSTOMER.DISPUTE.CREATED` webhook (signature verified through PayPal before anything is processed). Gemini maps the ledger to the intangible goods rule and writes claims. Every claim has to cite ledger event ids, and code drops any claim that does not. A PDF evidence pack is built and the seller reviews it, then clicks Submit, which calls `provide-evidence`. Not-as-described disputes are flagged as not covered and steer the seller to make an offer. In the sandbox the seller can call the adjudicate endpoint to see an outcome.
 
 ## Built with
@@ -55,6 +55,7 @@ python scripts/shots.py <order id>   # screenshots at desktop and phone size
 Scripts in `scripts/`:
 
 - `make_product.py` rebuilds the sample PDF in `products/`.
+- `make_cover.py` redraws the product cover image in `static/`.
 - `seed.py` adds demo rows marked `seed` (`--if-empty` only seeds a fresh database; Render runs it that way).
 - `e2e.py` buys the product in the sandbox with the sandbox buyer account and checks the download (and the ledger events too when `DB_PATH` points at the app's database).
 - `shots.py` takes screenshots of every page at desktop and phone size and logs console errors.

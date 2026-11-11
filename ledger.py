@@ -53,7 +53,7 @@ FLOW = ["PURCHASE_CAPTURED", "DELIVERY_EMAIL_LOGGED", "LINK_OPENED", "FILE_DOWNL
 
 def blocks(rows, limit=4):
     """Events as numbered proof-chain blocks (no IP or user agent)."""
-    return [{"id": r["id"], "label": SHORT.get(r["event"], r["event"]), "when": fmt_ts(r["ts"]), "short": short_ts(r["ts"])} for r in rows[:limit]]
+    return [{"id": r["id"], "label": SHORT.get(r["event"], r["event"]), "when": fmt_ts(r["ts"]), "short": short_ts(r["ts"]), "hash": (r["hash"] or "")[:8]} for r in rows[:limit]]
 
 
 def short_ts(ts):

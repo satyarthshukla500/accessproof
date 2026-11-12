@@ -29,11 +29,15 @@ async function start() {
   document.head.appendChild(s);
 }
 
-document.getElementById("demo").addEventListener("click", async (e) => {
-  e.currentTarget.disabled = true;
-  const o = await post("/api/demo-order");
-  if (o.redirect) location.href = o.redirect;
-  else { msg.textContent = o.error || "Could not start the demo."; e.currentTarget.disabled = false; }
+const demo = document.getElementById("demo");
+demo.addEventListener("click", async () => {
+  demo.disabled = true;
+  try {
+    const o = await post("/api/demo-order");
+    if (o.redirect) { location.href = o.redirect; return; }
+    msg.textContent = o.error || "Could not start the demo.";
+  } catch (err) { msg.textContent = "Could not reach the shop. Please try again."; }
+  demo.disabled = false;
 });
 
 start();

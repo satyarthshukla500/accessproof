@@ -39,7 +39,7 @@ const Grids = (() => {
   const disputeId = cell((r) => { const box = el("div", "stack"); box.append(el("span", "mono", r.id), sourcePill(r.source)); return [box]; });
 
   const DEFS = {
-    orders: [{ headerName: "Order", width: 230, cellRenderer: cell((r) => [idCell(r, r.id)]) }, { field: "payer_email", headerName: "Payer", flex: 1, minWidth: 190, tooltipField: "payer_email" },
+    orders: [{ headerName: "Order", width: 230, valueGetter: (p) => p.data.id, cellRenderer: cell((r) => [idCell(r, r.id)]) }, { field: "payer_email", headerName: "Payer", flex: 1, minWidth: 190, tooltipField: "payer_email" },
       { field: "amount", headerName: "Amount", width: 100, type: "rightAligned", valueFormatter: (p) => "$" + p.value }, { field: "when", headerName: "Created", width: 205 }, chain],
     ledger: [{ field: "step", headerName: "Step", width: 90, cellClass: "mono" }, { field: "when", headerName: "Time", width: 205 },
       { field: "event", headerName: "Event", flex: 1, minWidth: 190, tooltipField: "ua", valueFormatter: (p) => EVENTS[p.value] || p.value }, { field: "order_id", headerName: "Order", width: 130, cellClass: "mono", tooltipField: "order_id", valueFormatter: (p) => (p.value ? "…" + String(p.value).slice(-6) : "") },
@@ -48,7 +48,7 @@ const Grids = (() => {
       { field: "intent", headerName: "Intent", width: 140, valueFormatter: (p) => INTENTS[p.value] || p.value },
       { field: "outcome", headerName: "Outcome", width: 150, cellRenderer: (p) => pill(pretty(p.value), OUTCOMES[p.value]) },
       { field: "flagged", headerName: "Flag", width: 100, sortable: false, filter: false, cellRenderer: (p) => (p.value ? pill("Flagged", "p-warn") : "") }, { headerName: "Refund", width: 170, sortable: false, filter: false, cellRenderer: refundCell }],
-    disputes: [{ headerName: "Dispute", width: 210, cellRenderer: disputeId }, { headerName: "Reason", width: 150, cellRenderer: reasonCell },
+    disputes: [{ headerName: "Dispute", width: 210, valueGetter: (p) => p.data.id, cellRenderer: disputeId }, { headerName: "Reason", width: 150, valueGetter: (p) => pretty(p.data.reason), cellRenderer: reasonCell },
       { field: "status", headerName: "State", width: 165, cellRenderer: (p) => pill(stateName(p.value), p.value === "UNDER_REVIEW" ? "p-ok" : "") },
       { headerName: "Evidence", flex: 1, minWidth: 150, valueGetter: (p) => verdict(p.data) }, { headerName: "Actions", width: 190, sortable: false, filter: false, cellRenderer: cell(disputeActions) }],
   };
@@ -88,5 +88,5 @@ const Grids = (() => {
     Object.keys(grids).forEach((name) => { track(name); grids[name].setGridOption("rowData", data[name]); });
   }
 
-  return { make, refresh, filter: (n, text) => grids[n] && grids[n].setGridOption("quickFilterText", text), csv: (n) => grids[n] && grids[n].exportDataAsCsv({ fileName: "accessproof-" + n + ".csv", processCellCallback: (p) => csvSafe(p.value) }) };
+  return { make, refresh, filter: (n, text) => grids[n] && grids[n].setGridOption("quickFilterText", text), csv: (n) => grids[n] && grids[n].exportDataAsCsv({ fileName: "accessproof-" + n + ".csv", processCellCallback: (p) => csvSafe(p.column.getColDef().field === "event" ? EVENTS[p.value] || p.value : p.value) }) };
 })();

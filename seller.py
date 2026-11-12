@@ -46,8 +46,7 @@ def reply(ok, message, code=200):
 @bp.route("/login", methods=["GET", "POST"])
 def login():
     error = ""
-    ip = request.remote_addr or ""
-    key = "login:" + (":".join(ip.split(":")[:4]) if ":" in ip else ip)  # an IPv6 user is one /64, not 2^64 addresses
+    key = "login:" + limits.net(request.remote_addr or "")
     if request.method == "POST":
         if limits.count(key) >= 5:  # failed attempts only; per address, so strangers cannot lock the seller out
             return render_template("login.html", error="Too many attempts. Try again later."), 429
@@ -78,9 +77,9 @@ def dashboard():
 @bp.get("/api/data")
 @login_required
 def data():
-    orders = db.query("SELECT * FROM orders ORDER BY created_at DESC")
+    orders = db.query("SELECT * FROM orders ORDER BY created_at DESC LIMIT 300")
     chain = {o["id"]: ledger.verify(o["id"]) for o in orders}
-    rows = db.query("SELECT * FROM ledger ORDER BY id DESC")
+    rows = db.query("SELECT * FROM ledger ORDER BY id DESC LIMIT 1200")
     seen = {}
     for r in reversed(rows):  # the step of an event inside its own order: 1, 2, 3 ...
         seen[r["order_id"]] = r["step"] = seen.get(r["order_id"], 0) + 1
@@ -96,14 +95,14 @@ def data():
                  can_adjudicate=d["status"] == "UNDER_REVIEW" and has_link(raw, "adjudicate"),
                  can_offer=d["stage"] == "INQUIRY" and d["source"] == "paypal" and d["status"] == "WAITING_FOR_SELLER_RESPONSE")
     # demo rows (source=seed) are left out so the cards only show real and sample activity
-    stats = {"deflected": db.one("SELECT COUNT(*) n FROM help_requests WHERE outcome='deflected' AND source NOT IN ('seed','demo')")["n"],
+    stats = {"deflected": db.one("SELECT COUNT(DISTINCT order_id) n FROM help_requests WHERE outcome='deflected' AND source NOT IN ('seed','demo')")["n"],
              "filed": db.one("SELECT COUNT(*) n FROM disputes WHERE (last_result LIKE 'Evidence submitted%' OR raw LIKE '%SUBMITTED_BY_SELLER%') AND source NOT IN ('seed','demo')")["n"]}
     stats["fees"] = stats["deflected"] * FEE
     stats["refunds"] = db.one("SELECT COUNT(*) n FROM ledger l JOIN orders o ON o.id=l.order_id WHERE l.event='REFUND_APPROVED' AND o.source NOT IN ('seed','demo')")["n"]
     return jsonify(stats=stats, orders=[dict(o, chain=chain[o["id"]], when=ledger.fmt_ts(o["created_at"])) for o in orders],
                    ledger=[dict(r, chain=chain.get(r["order_id"], ""), when=ledger.fmt_ts(r["ts"])) for r in rows],
                    help=db.query("SELECT h.*, r.id refund_id, r.status refund_status FROM help_requests h "
-                                 "LEFT JOIN refund_requests r ON r.help_id=h.id ORDER BY h.id DESC"),
+                                 "LEFT JOIN refund_requests r ON r.help_id=h.id ORDER BY h.id DESC LIMIT 300"),
                    disputes=disputes, feed=overview.feed(), timeline=overview.timeline())
 
 

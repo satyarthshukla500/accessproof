@@ -23,14 +23,14 @@
 {%- endif -%}
 </svg>{% endmacro %}
 
-{% macro proof(blocks, next=None, label='') %}
+{% macro proof(blocks, next=None, label='', verified=True) %}
 <div class="chain" {% if label %}aria-label="{{ label }}"{% endif %}>
   <ol class="chain-row">
     {%- for b in blocks %}
     <li class="block{% if loop.last and not next %} last{% endif %}" title="{{ b.when }}"><span class="num">Step {{ loop.index }}</span><span class="lbl">{{ b.label }}</span><span class="tm">{{ b.short }}</span></li>
     {%- endfor %}
-    {%- if next %}<li class="block next"><span class="num">next</span><span class="lbl">{{ next }}</span></li>{% endif %}
+    {%- if next %}<li class="block next"><span class="num">Next</span><span class="lbl">{{ next }}</span></li>{% endif %}
   </ol>
-  <p class="verified">{{ icon('shield') }}<span>Record verified</span></p>
+  {% if verified and blocks %}<p class="verified">{{ icon('shield') }}<span>Record verified</span></p>{% endif %}
 </div>
 {% endmacro %}

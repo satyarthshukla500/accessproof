@@ -22,7 +22,8 @@ import limits  # noqa: E402
 import paypal  # noqa: E402
 
 PRODUCT = {"id": "notion-kit", "title": "Notion Freelancer Starter Kit", "price": "29.00",
-           "file": os.path.join(os.path.dirname(os.path.abspath(__file__)), "products", "notion-freelancer-starter-kit.pdf")}
+           "file": os.path.join(os.path.dirname(os.path.abspath(__file__)), "products", "notion-freelancer-starter-kit.pdf"),
+           "sample": os.path.join(os.path.dirname(os.path.abspath(__file__)), "products", "notion-freelancer-starter-kit-sample.pdf")}
 TOKEN_DAYS = 7
 ID_RE = re.compile(r"[A-Za-z0-9-]{1,64}")
 CONTROL = re.compile("[\x00-\x08\x0b-\x1f\u202a-\u202e\u2066-\u2069]")  # control and bidi override characters
@@ -114,7 +115,7 @@ def config():
 
 @app.post("/api/orders")
 def create_order():
-    if limits.rate_limited("order:" + client_ip(), 30):
+    if limits.rate_limited("order:" + limits.net(client_ip()), 30):
         return jsonify(error="Too many requests"), 429
     try:
         o = paypal.create_order(PRODUCT["price"], PRODUCT["title"], PRODUCT["id"])
@@ -128,7 +129,7 @@ def create_order():
 @app.post("/api/demo-order")
 def demo_order():
     """A judge's shortcut: a demo order with a payment and a link already on record, so the assistant can be tried without paying. It never touches PayPal."""
-    if limits.rate_limited("demo:" + client_ip(), 8):
+    if limits.rate_limited("demo:" + limits.net(client_ip()), 8) or limits.rate_limited("demo:all", 150, 3600):
         return jsonify(error="Too many demo orders. Try again later."), 429
     oid = "DEMO-" + secrets.token_hex(6).upper()
     db.run("INSERT INTO orders(id,capture_id,payer_email,amount,currency,product,created_at,source) VALUES(?,?,?,?,?,?,datetime('now'),'demo')",
@@ -144,7 +145,7 @@ def capture(order_id):
         abort(404)
     if order_id not in session.get("orders", []):
         abort(403)
-    if limits.rate_limited("order:" + client_ip(), 30):
+    if limits.rate_limited("order:" + limits.net(client_ip()), 30):
         return jsonify(error="Too many requests"), 429
     try:
         try:
@@ -192,13 +193,16 @@ def success(order_id):
 @app.get("/d/<token>")
 def download(token):
     order_id = check(token)
-    if not order_id or not db.one("SELECT id FROM orders WHERE id=? AND source IN ('real','demo') AND created_at > datetime('now', ?)", (order_id, "-%d day" % TOKEN_DAYS))             or db.one("SELECT id FROM ledger WHERE order_id=? AND event='REFUND_APPROVED'", (order_id,)):
+    order = db.one("SELECT id, source FROM orders WHERE id=? AND source IN ('real','demo') AND created_at > datetime('now', ?)", (order_id, "-%d day" % TOKEN_DAYS)) if order_id else None
+    if not order or db.one("SELECT id FROM ledger WHERE order_id=? AND event='REFUND_APPROVED'", (order_id,)):
         return render_template("message.html", title="Link not valid",
                                text="This download link is invalid, has expired, or the order was refunded."), 403
-    if request.method == "GET" and os.path.exists(PRODUCT["file"]):  # link scanners send HEAD
+    demo = order["source"] == "demo"  # a demo order gets the free sample; the full guide is only for paid orders
+    path, name = (PRODUCT["sample"], "notion-freelancer-starter-kit-SAMPLE.pdf") if demo else (PRODUCT["file"], "notion-freelancer-starter-kit.pdf")
+    if request.method == "GET" and os.path.exists(path):  # link scanners send HEAD
         log_event(order_id, "LINK_OPENED")
         log_event(order_id, "FILE_DOWNLOADED")
-    return send_file(PRODUCT["file"], as_attachment=True, download_name="notion-freelancer-starter-kit.pdf")
+    return send_file(path, as_attachment=True, download_name=name)
 
 
 def chat_view(row, rows_by_id):
@@ -212,11 +216,15 @@ def help_page(order_id):
     order = buyer_order(order_id)
     wants_json = request.is_json
     if request.method == "POST":
-        if limits.rate_limited("help:" + client_ip(), 30):  # a real conversation needs room; the model quota is the real limit
+        if limits.rate_limited("help:" + limits.net(client_ip()), 30):  # a real conversation needs room; the model quota is the real limit
             if wants_json:
                 return jsonify(error="Too many requests. Try again later."), 429
             return render_template("message.html", title="Slow down", text="Too many requests. Try again later."), 429
-        raw = (request.get_json(silent=True) or {}).get("message", "") if wants_json else request.form.get("message", "")
+        try:
+            body = (request.get_json(silent=True) or {}) if wants_json else {}
+        except RecursionError:  # absurdly nested JSON
+            return jsonify(error="That request could not be read."), 400
+        raw = body.get("message", "") if wants_json else request.form.get("message", "")
         message = CONTROL.sub("", str(raw)).strip()[:1000]
         if wants_json and not message:
             return jsonify(error="Please type a message."), 400

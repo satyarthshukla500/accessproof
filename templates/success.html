@@ -1,12 +1,12 @@
 {% extends "base.html" %}
 {% from "_ui.html" import proof, icon %}
-{% block title %}Payment received · AccessProof{% endblock %}
+{% block title %}{{ 'Demo order' if order.source == 'demo' else 'Payment received' }} · AccessProof{% endblock %}
 {% block head %}<script src="{{ url_for('static', filename='success.js') }}" defer></script>{% endblock %}
 {% block topright %}<a class="backlink" href="/">← Back to the store</a>{% endblock %}
 {% block body %}
 <section class="card success rise">
   <div class="check" data-overlap-ok><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12l4 4 10-10"/></svg></div>
-  <h1>Payment received</h1>
+  <h1>{{ 'Demo order created' if order.source == 'demo' else 'Payment received' }}</h1>
   <p class="muted">{{ product.title }} · ${{ order.amount }}&nbsp;{{ order.currency }}</p>
   {% if order.source == 'demo' %}<p class="small muted">Demo order <code>{{ order.id }}</code> · no payment taken</p>{% else %}<p class="small muted">Order <code>{{ order.id }}</code><br>PayPal capture <code>{{ order.capture_id }}</code></p>{% endif %}
   <a class="btn big" id="download" href="{{ link }}">{{ icon("download") }}Download your file</a>

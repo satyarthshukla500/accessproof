@@ -185,3 +185,7 @@ input:focus, textarea:focus { outline: 2px solid var(--blue); outline-offset: 1p
 .link:hover { color: var(--ink); }
 .nosug .quick, .nosug .follow { display: none; }
 @media (max-width: 900px) { .link { min-height: 44px; } .nextrow { min-height: 56px; } }
+.pill, .backlink { white-space: nowrap; }
+@media (max-width: 520px) { .topnav .pill { display: none; } .success { margin-bottom: 84px; } }
+input, textarea { border-color: rgba(255, 255, 255, .26); }
+input:focus-visible, textarea:focus-visible, .composer textarea:focus { outline: 2px solid var(--mint); outline-offset: 2px; }

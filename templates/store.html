@@ -9,7 +9,7 @@
     <p class="lead">An 11-page guide to running clients, projects and invoices in Notion, with ready-to-paste templates. Every step of your purchase is sealed in a tamper&#8209;evident chain, so if anything goes wrong the proof is already there.</p>
     <div class="card chain-card">
       <p class="eyebrow">What gets recorded for every purchase</p>
-      {{ proof([{"label": "Paid", "short": "", "when": ""}, {"label": "Link issued", "short": "", "when": ""}, {"label": "Opened", "short": "", "when": ""}, {"label": "Downloaded", "short": "", "when": ""}]) }}
+      {{ proof([{"label": "Paid", "short": "", "when": ""}, {"label": "Link issued", "short": "", "when": ""}, {"label": "Opened", "short": "", "when": ""}, {"label": "Downloaded", "short": "", "when": ""}], verified=False) }}
     </div>
   </div>
   <div class="card checkout rise d2">

@@ -5,7 +5,7 @@ from datetime import datetime, timezone
 import db
 
 EVENT_LABELS = {"PURCHASE_CAPTURED": "Payment captured", "DELIVERY_EMAIL_LOGGED": "Download link issued", "LINK_OPENED": "Link opened",
-                "FILE_DOWNLOADED": "File downloaded", "LINK_RESENT": "New link issued", "REFUND_APPROVED": "Refund approved"}
+                "FILE_DOWNLOADED": "File downloaded", "LINK_RESENT": "New link issued", "REFUND_APPROVED": "Refund approved", "EVIDENCE_SUBMITTED": "Evidence submitted"}
 ZERO = "0" * 64
 
 
@@ -70,11 +70,6 @@ def next_label(rows):
 
 def public_events(rows):
     return [{"id": r["id"], "name": EVENT_LABELS.get(r["event"], r["event"]), "when": fmt_ts(r["ts"])} for r in rows]
-
-
-def latest_chain():
-    order = db.one("SELECT id FROM orders WHERE source='real' ORDER BY created_at DESC LIMIT 1")
-    return blocks(rows(order["id"])) if order else []
 
 
 def status_line(rows):

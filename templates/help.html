@@ -25,7 +25,7 @@
       <span class="avatar" data-overlap-ok>{{ icon("shield") }}</span>
       <div><h2>AccessProof Assistant <span class="tag">Gemini</span></h2><p>AI support for your order</p></div>
     </header>
-    <p class="chat-note">Answers come from your order's delivery record. Refunds are approved by the seller.</p>
+    <p class="chat-note">Answers come from your order's delivery record and are written by Google's Gemini model. Refunds are approved by the seller.</p>
     <div class="msgs" id="msgs" aria-live="polite">
       <div class="msg bot"><div class="bubble">Hi! I'm looking at order <b class="mono">{{ order.id }}</b>. {{ status }} What can I help with?</div></div>
       {% for h in history %}

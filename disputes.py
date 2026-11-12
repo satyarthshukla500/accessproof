@@ -33,7 +33,7 @@ def raw_of(d):
 
 def upsert_dispute(raw, source="paypal"):
     tx = (raw.get("disputed_transactions") or [{}])[0].get("seller_transaction_id", "")
-    order = db.one("SELECT id FROM orders WHERE capture_id=? OR id=?", (tx, tx))
+    order = db.one("SELECT id FROM orders WHERE source!='demo' AND (capture_id=? OR id=?)", (tx, tx)) if tx else None
     amount = raw.get("dispute_amount", {})
     vals = (order["id"] if order else None, tx, raw.get("reason"), raw.get("status"), raw.get("dispute_life_cycle_stage"),
             amount.get("value"), amount.get("currency_code"), json.dumps(raw), raw["dispute_id"])

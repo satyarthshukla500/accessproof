@@ -88,7 +88,8 @@ function chainEl(blocks, label) {
   });
   const v = el("p", "verified");
   v.append(svg("shield"), el("span", "", label || "Record verified"));
-  box.append(ol, v);
+  box.append(ol);
+  if (blocks.length) box.append(v);  // nothing to verify, nothing to claim
   return box;
 }
 
@@ -140,7 +141,8 @@ function renderHero() {
   meta.append(el("span", "pill real", "Real · PayPal sandbox"), el("span", "mono muted", d.id), el("span", "pill sm plain", stateName(d.status)));
   const acts = el("div", "acts");
   if (d.has_pack) { const a = el("a", "btn sm", "Open evidence PDF"); a.href = "/seller/disputes/" + encodeURIComponent(d.id) + "/pdf"; a.target = "_blank"; a.rel = "noopener"; acts.append(a); }
-  else acts.append(actButton("Build evidence pack", "/seller/disputes/" + encodeURIComponent(d.id) + "/pack"));
+  else if (d.order_id) acts.append(actButton("Build evidence pack", "/seller/disputes/" + encodeURIComponent(d.id) + "/pack"));
+  else acts.append(el("span", "muted small", "The order for this case is not in this instance, so no pack can be built here."));
   const claims = el("button", "btn sm ghost", "See cited claims");
   claims.type = "button";
   claims.addEventListener("click", () => openDrawer(d.id));

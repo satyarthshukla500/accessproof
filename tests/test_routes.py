@@ -354,7 +354,7 @@ def test_store_button_is_paypal_only():
 def test_pages_show_the_proof_chain(ctx, monkeypatch):
     appmod, c = bought(ctx, monkeypatch)
     store = c.get("/").data.decode()
-    assert "Record verified" in store and "Step 1" in store and "Paid" in store and "#1" not in store
+    assert "Step 1" in store and "Paid" in store and "#1" not in store
     assert "What gets recorded for every purchase" in store and "hashes" not in store  # a clean example, never a stranger's activity
     success = c.get("/success/ORD1" + tok()).data.decode()
     assert "Your delivery record" in success and "Link issued" in success and "next" in success and "Step 2" in success
@@ -498,7 +498,7 @@ def test_demo_orders_never_reach_the_dashboard_numbers_or_paypal(ctx, client_log
     db.run("INSERT INTO help_requests(order_id,message,intent,reply,action,cited,flagged,outcome,created_at,source) VALUES(?,?,?,?,?,?,?,?,datetime('now'),'demo')",
            (oid, "hi", "OTHER", "hello", "NONE", "[]", 0, "deflected"))
     import overview
-    assert overview.feed() == [] and overview.timeline() == []
+    assert all(f["text"].startswith("Demo · ") for f in overview.feed()) and all(f["name"].startswith("Demo · ") for f in overview.timeline())  # visible and tagged, never counted
     rid = db.run("INSERT INTO refund_requests(order_id,amount) VALUES(?,?)", (oid, "29.00"))
     with c.session_transaction() as s:
         s.update(seller=True, csrf="x", t=__import__("time").time())

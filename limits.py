@@ -1,6 +1,16 @@
+import ipaddress
 import time
 
 _hits = {}
+
+
+def net(ip):
+    """The rate-limit key of an address: an IPv6 user owns a whole /64, so the key is the network, not the single address."""
+    try:
+        a = ipaddress.ip_address(ip)
+    except ValueError:
+        return ip or ""
+    return str(ipaddress.ip_network("%s/64" % a, strict=False)) if a.version == 6 else str(a)
 
 
 def count(key, window=600):

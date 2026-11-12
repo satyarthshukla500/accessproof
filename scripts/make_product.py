@@ -137,12 +137,13 @@ def cover(c, doc):
     c.restoreState()
 
 
-def build(path):
+def build(path, sample=False):
     doc = BaseDocTemplate(path, pagesize=letter, title=TITLE, author="AccessProof demo store", subject="A practical Notion workspace for freelancers")
     body = Frame(M, 0.85 * inch, W - 2 * M, H - 1.85 * inch, id="body", leftPadding=0, rightPadding=0, topPadding=0, bottomPadding=0)
     full = Frame(0, 0, W, H, id="cover")
     doc.addPageTemplates([PageTemplate(id="cover", frames=[full], onPage=cover, autoNextPageTemplate="main"), PageTemplate(id="main", frames=[body], onPage=on_page)])
     S = []
+    cut = []  # where the sample ends: after chapter 1
 
     S += [Spacer(1, 1), PageBreak()]
 
@@ -166,6 +167,7 @@ def build(path):
     S += [p("The three rules", H2)] + bullets(["<b>One home for everything.</b> If it is not in Studio, it does not exist.", "<b>Relations over copies.</b> Never type a client name twice; relate to the client row.",
                                                "<b>Every row has a next step.</b> A row without a next step is clutter."])
     S += [Spacer(1, 6), callout("Tip", "Give every database a short icon and colour. You will recognise them faster than words, and your sidebar will stay readable."), PageBreak()]
+    cut.append(len(S))
 
     # 2 clients
     S += chapter(2, "Clients", "The place you open first every morning.")
@@ -246,8 +248,12 @@ def build(path):
         S += [KeepTogether([p("<b>%s</b>" % q, BODY), p(a, ParagraphStyle("a", parent=BODY, textColor=colors.HexColor(MUTED), leftIndent=0))])]
     S += [Spacer(1, 10), callout("The short version", "Five databases. Relations, not copies. A next step on every row. A Friday review. That is the entire system.")]
     S += [Spacer(1, 16), p("Thank you for buying the Notion Freelancer Starter Kit. Questions about your order go to the shop's assistant on your confirmation page.", SMALL)]
+    if sample:
+        S = S[:cut[0]] + chapter("", "Keep reading", "This is the free sample: the cover, the contents and the first chapter.") + [
+            callout("The full kit has eleven pages", "Chapters on Clients, Projects, Invoices (with an overdue formula), Tasks, the Friday review, four copy-paste message templates, nine formulas and a questions page. Buy it from the shop for 29.00 USD.")]
     doc.build(S)
 
 
 if __name__ == "__main__":
     build("products/notion-freelancer-starter-kit.pdf")
+    build("products/notion-freelancer-starter-kit-sample.pdf", sample=True)

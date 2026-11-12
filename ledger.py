@@ -90,10 +90,15 @@ def head(order_id):
     return (rows(order_id) or [{"hash": ZERO}])[-1]["hash"]
 
 
-def verify(order_id):
+def first_broken(order_id):
+    """Position (0 = first step) of the first row that does not match the one before it, else None."""
     prev = ZERO
-    for r in rows(order_id):
+    for i, r in enumerate(rows(order_id)):
         if r["prev_hash"] != prev or r["hash"] != make_hash(prev, r):
-            return "broken"
+            return i
         prev = r["hash"]
-    return "ok"
+    return None
+
+
+def verify(order_id):
+    return "ok" if first_broken(order_id) is None else "broken"

@@ -15,6 +15,10 @@
     <p class="eyebrow">Your delivery record</p>
     {{ proof(chain, next_label) }}
     <p class="small muted">Every step is saved in order. If anyone edited an old step, the record would show as broken.</p>
+    <div class="proofrow">
+      <a class="link" href="{{ proof_url }}">{{ icon("shield") }}Verify this record</a>
+      <button class="link" id="sharebtn" type="button" data-url="{{ proof_url }}">{{ icon("link") }}Share proof link</button>
+    </div>
   </div>
   <div class="whatnext">
     <p class="eyebrow">What would you like to do next?</p>

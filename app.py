@@ -10,7 +10,7 @@ import secrets
 import time
 
 from dotenv import load_dotenv
-from flask import Flask, abort, jsonify, render_template, request, send_file, session
+from flask import Flask, abort, jsonify, redirect, render_template, request, send_file, session
 from werkzeug.middleware.proxy_fix import ProxyFix
 
 load_dotenv()
@@ -92,6 +92,11 @@ def check(token, now=None):
         return order_id if math.isfinite(float(exp)) and float(exp) > (now or time.time()) else None
     except (ValueError, TypeError):
         return None
+
+
+def proof_code(order_id):
+    """Public code for one order's delivery record. It is not the buyer's token: it opens the verify page and nothing else."""
+    return order_id + "." + hmac.new(os.environ["APP_SECRET"].encode(), ("verify|" + order_id).encode(), hashlib.sha256).hexdigest()[:20]
 
 
 def log_event(order_id, event, detail=None):
@@ -187,7 +192,31 @@ def success(order_id):
         log_event(order_id, "DELIVERY_EMAIL_LOGGED", {"to": order["payer_email"], "note": "download link issued; no email service is connected"})
     rows = ledger.rows(order_id)
     return render_template("success.html", order=order, product=PRODUCT, token=sign(order_id), link="/d/" + sign(order_id),
-                           chain=ledger.blocks(rows), next_label=ledger.next_label(rows))
+                           chain=ledger.blocks(rows), next_label=ledger.next_label(rows), proof_url="/verify/" + proof_code(order_id))
+
+
+@app.get("/verify")
+def verify_form():
+    code = request.args.get("code", "").strip().split("?")[0].rstrip("/").rsplit("/", 1)[-1]
+    if code:
+        return redirect("/verify/" + code)
+    return render_template("verify.html", state="form")
+
+
+@app.get("/verify/<code>")
+def verify_record(code):
+    """Anyone with a proof code can check that the delivery record was not changed. Only event names, times and short fingerprints are shown."""
+    if limits.rate_limited("verify:" + limits.net(client_ip()), 120):
+        return render_template("message.html", title="Too many checks", text="Please wait a few minutes and try again."), 429
+    order_id = code.rsplit(".", 1)[0] if "." in code else ""
+    order = db.one("SELECT id FROM orders WHERE id=? AND source IN ('real','demo')", (order_id,)) if order_id else None
+    if not order or not hmac.compare_digest(code, proof_code(order_id)):
+        return render_template("verify.html", state="none"), 404
+    rows = ledger.rows(order_id)
+    bad = ledger.first_broken(order_id)
+    events = [{"step": i + 1, "name": ledger.EVENT_LABELS.get(r["event"], r["event"]), "when": ledger.fmt_ts(r["ts"]), "print": (r["hash"] or "")[:8]} for i, r in enumerate(rows)]
+    return render_template("verify.html", state="ok" if bad is None and rows else ("bad" if bad is not None else "none"),
+                           blocks=ledger.blocks(rows, limit=6), events=events, bad=bad, head=ledger.head(order_id)[:8])
 
 
 @app.get("/d/<token>")
@@ -238,7 +267,7 @@ def help_page(order_id):
     rows = ledger.rows(order_id)
     by_id = {r["id"]: r for r in rows}
     history = [chat_view(h, by_id) for h in db.query("SELECT * FROM help_requests WHERE order_id=? ORDER BY id", (order_id,))]
-    return render_template("help.html", order=order, history=history, token=sign(order_id), status=ledger.status_line(rows), chain=ledger.blocks(rows))
+    return render_template("help.html", order=order, history=history, token=sign(order_id), status=ledger.status_line(rows), chain=ledger.blocks(rows), proof_url="/verify/" + proof_code(order_id))
 
 
 @app.post("/order/<order_id>/help/<int:help_id>/solved")

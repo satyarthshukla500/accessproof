@@ -1,0 +1,33 @@
+{% extends "base.html" %}
+{% from "_ui.html" import proof, icon %}
+{% block title %}Verify a delivery record · AccessProof{% endblock %}
+{% block topright %}<a class="backlink" href="/">← Back to the store</a>{% endblock %}
+{% block body %}
+<section class="vpage rise">
+  <div><p class="eyebrow">Public check</p><h1>Verify a delivery record</h1></div>
+
+  {% if state == 'ok' %}
+  <div class="vbanner" role="status">{{ icon("shield") }}<div><h2>Verified</h2><p>This delivery record has not been changed since it was written.</p></div></div>
+  {% elif state == 'bad' %}
+  <div class="vbanner bad" role="alert">{{ icon("alert") }}<div><h2>This record was changed after it was written</h2><p>The first step that does not match the one before it is step {{ bad + 1 }}.</p></div></div>
+  {% elif state == 'none' %}
+  <div class="vbanner none" role="status">{{ icon("list") }}<div><h2>No record found</h2><p>Check the proof code or link and try again.</p></div></div>
+  {% endif %}
+
+  {% if state in ('ok', 'bad') %}
+  {{ proof(blocks, label='Delivery record', verified=False, bad=bad) }}
+  <ol class="vlist" aria-label="Every step of this record">
+    {% for e in events %}
+    <li{% if bad is not none and loop.index0 == bad %} class="bad"{% endif %}><span class="st">Step {{ e.step }}</span><span class="nm">{{ e.name }}</span><span class="tm">{{ e.when }}</span><span class="fp" title="Short fingerprint of this step">{{ e.print }}</span></li>
+    {% endfor %}
+  </ol>
+  <p class="small muted">Each step is locked to the one before it. This page recomputes those locks from the stored record and tells you whether anything changed. Latest fingerprint: <code>{{ head }}</code>. No buyer details are shown.</p>
+  {% else %}
+  <form class="vform" action="/verify" method="get">
+    <input type="text" name="code" placeholder="Paste a proof code or link" aria-label="Proof code" required autocomplete="off">
+    <button class="btn" type="submit">Verify</button>
+  </form>
+  <p class="small muted">Every purchase gets a delivery record: payment, link issued, link opened, file downloaded. Each step is locked to the one before it, so a change to an old step is visible. Buyers find their proof link on their order page.</p>
+  {% endif %}
+</section>
+{% endblock %}

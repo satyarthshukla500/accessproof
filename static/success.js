@@ -1,3 +1,13 @@
+/* copy the public proof link (works after the record strip is refreshed) */
+document.addEventListener("click", async (e) => {
+  const b = e.target.closest("#sharebtn");
+  if (!b) return;
+  const label = b.lastChild;
+  try { await navigator.clipboard.writeText(location.origin + b.dataset.url); label.textContent = "Link copied"; }
+  catch (err) { label.textContent = "Copy: " + location.origin + b.dataset.url; }
+  setTimeout(() => { label.textContent = "Share proof link"; }, 2500);
+});
+
 /* after a download click: say what happened, then refresh the delivery record from the server */
 const dl = document.getElementById("download");
 const note = document.getElementById("dlnote");

@@ -102,9 +102,17 @@ def token(order_id):
     return payload + "." + hmac.new(os.environ["APP_SECRET"].encode(), payload.encode(), hashlib.sha256).hexdigest()
 
 
+def proof_code(order_id):
+    """The public code the verify page accepts (same as app.proof_code)."""
+    return order_id + "." + hmac.new(os.environ["APP_SECRET"].encode(), ("verify|" + order_id).encode(), hashlib.sha256).hexdigest()[:20]
+
+
 def pages(order_id):
     t = token(order_id)
     out = [("store", "/", store), ("success", "/success/%s?t=%s" % (order_id, t), None), ("chat", "/order/%s/help?t=%s" % (order_id, t), None), ("login", "/login", None)]
+    out += [("verify", "/verify/" + proof_code(order_id), None), ("verify-form", "/verify", None), ("verify-none", "/verify/unknown.code", None)]
+    if os.environ.get("BAD_ORDER"):
+        out.append(("verify-bad", "/verify/" + proof_code(os.environ["BAD_ORDER"]), None))
     if os.environ.get("SHOT_HELP"):
         out.append(("chat-reply", "/order/%s/help?t=%s" % (order_id, t), ask))
     if os.environ.get("SELLER_PASSWORD") and not os.environ.get("NO_SELLER"):

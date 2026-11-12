@@ -30,7 +30,7 @@ ABOUT = (
     "- Only the seller can approve a refund. You can pass a refund request on to the seller, but nothing is refunded until the seller approves it.\n"
     "- If a buyer opens a PayPal dispute, the seller can answer it with a PDF evidence pack built from this same record, and every claim in it cites ledger events.\n"
     "- The shop records the time, IP address and browser of each download to prove delivery. This is shared with PayPal only if a dispute is opened.\n"
-    "- You are an AI assistant running on Google Gemini. A code check throws away any answer that cites an event that does not exist for this order."
+    "- You are an automated chat assistant powered by Google Gemini. A code check throws away any answer that cites an event that does not exist for this order."
 )
 
 HELP_SYSTEM = (

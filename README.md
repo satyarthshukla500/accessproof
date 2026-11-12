@@ -69,7 +69,7 @@ For webhooks, deploy first, then run `python scripts/register_webhook.py https:/
 - Live app: https://accessproof-g642.onrender.com
 - Logins for the live demo (a PayPal sandbox buyer and the seller dashboard password) are provided with the project submission. To use your own, create a sandbox buyer in the PayPal developer dashboard and choose any `SELLER_PASSWORD` in `.env`.
 
-Quickest path to the chat assistant: click "Judges: try the assistant without paying" on the store page (a demo order, no PayPal). Full path: buy the product with the PayPal button and a sandbox buyer, download the file, open "Problem with your order?" and type "I never got my download". Then log in at `/login` as the seller: the Access ledger tab shows each delivery event, Help requests shows the assistant's case, and Disputes lets you build an evidence pack and open the PDF.
+Quickest path to the chat assistant: click "Try the app now, no login or payment needed" on the store page (a demo order, no PayPal). Full path: buy the product with the PayPal button and a sandbox buyer, download the file, open "Problem with your order?" and type "I never got my download". Then log in at `/login` as the seller: the Access ledger tab shows each delivery event, Help requests shows the assistant's case, and Disputes lets you build an evidence pack and open the PDF.
 
 The first request after a quiet period can be slow on a free Render instance, and its disk resets on deploys and after idle time, so run the steps in one sitting. A fresh instance starts from labelled seed data plus the recorded real sandbox case (`scripts/real_case.json`).
 

@@ -1,6 +1,7 @@
 {% extends "base.html" %}
 {% from "_ui.html" import proof, icon %}
 {% block title %}Support · AccessProof{% endblock %}
+{% block topright %}<a class="backlink" href="/success/{{ order.id }}?t={{ token }}">← Back to your order</a>{% endblock %}
 {% block head %}<script src="{{ url_for('static', filename='chat.js') }}" defer></script>{% endblock %}
 {% block body %}
 <div class="chat-page">

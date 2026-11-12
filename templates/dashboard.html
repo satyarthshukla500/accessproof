@@ -23,6 +23,7 @@
     </nav>
     <div class="side-foot">
       <p class="small muted">Sandbox mode · seed data hidden from totals</p>
+      <a class="navbtn" href="/">{{ icon("bag") }}<span>View the store</span></a>
       <form method="post" action="/logout"><input type="hidden" name="csrf" value="{{ csrf }}"><button class="navbtn" type="submit">{{ icon("logout") }}<span>Log out</span></button></form>
     </div>
   </aside>

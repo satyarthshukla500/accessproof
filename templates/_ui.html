@@ -27,10 +27,10 @@
 <div class="chain" {% if label %}aria-label="{{ label }}"{% endif %}>
   <ol class="chain-row">
     {%- for b in blocks %}
-    <li class="block{% if loop.last and not next %} last{% endif %}" title="{{ b.when }} · hash {{ b.hash }}…"><span class="num">#{{ b.id }}</span><span class="lbl">{{ b.label }}</span><span class="tm">{{ b.short }}</span></li>
+    <li class="block{% if loop.last and not next %} last{% endif %}" title="{{ b.when }}"><span class="num">#{{ b.id }}</span><span class="lbl">{{ b.label }}</span><span class="tm">{{ b.short }}</span></li>
     {%- endfor %}
     {%- if next %}<li class="block next"><span class="num">next</span><span class="lbl">{{ next }}</span></li>{% endif %}
   </ol>
-  <p class="verified">{{ icon('shield') }}<span>Hash chain verified{% if blocks %} · <code>{{ blocks[-1].hash }}…</code>{% endif %}</span></p>
+  <p class="verified">{{ icon('shield') }}<span>Hash chain verified</span></p>
 </div>
 {% endmacro %}

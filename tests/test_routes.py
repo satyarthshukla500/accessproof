@@ -149,8 +149,8 @@ def test_help_buyer_text_cannot_close_tag(ctx, monkeypatch):
 def test_help_rate_limit(ctx, monkeypatch):
     appmod, c = bought(ctx, monkeypatch)
     monkeypatch.setattr(assistant, "call_model", lambda s, u: good_json(intent="OTHER", suggested_action="NONE"))
-    codes = [c.post("/order/ORD1/help" + tok(), data={"message": "hello"}).status_code for _ in range(12)]
-    assert codes[:10] == [200] * 10 and codes[10:] == [429, 429]
+    codes = [c.post("/order/ORD1/help" + tok(), data={"message": "hello"}).status_code for _ in range(32)]
+    assert codes[:30] == [200] * 30 and codes[30:] == [429, 429]
 
 
 def test_solved_needs_signed_token_and_works_once(ctx, monkeypatch):
@@ -341,8 +341,8 @@ def test_chat_json_errors_and_flagging(ctx, monkeypatch):
 def test_chat_json_is_rate_limited(ctx, monkeypatch):
     appmod, c = bought(ctx, monkeypatch)
     monkeypatch.setattr(assistant, "call_model", lambda s, u: good_json(intent="OTHER", suggested_action="NONE", cited_event_ids=[1]))
-    codes = [chat(c, "hello").status_code for _ in range(11)]
-    assert codes == [200] * 10 + [429]
+    codes = [chat(c, "hello").status_code for _ in range(31)]
+    assert codes == [200] * 30 + [429]
     assert chat(c, "hello").get_json()["error"].startswith("Too many")
 
 

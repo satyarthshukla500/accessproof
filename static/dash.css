@@ -19,15 +19,14 @@
 .stat .cap { font-size: 12.5px; color: var(--muted); }
 .grid2 { display: grid; grid-template-columns: minmax(0, 1.5fr) minmax(0, 1fr); gap: 20px; margin-bottom: 20px; }
 .hero-card { align-self: start; position: relative; display: flex; flex-direction: column; gap: 18px; padding: 26px; overflow: hidden; border: 1px solid transparent; border-radius: 22px;
-  background: linear-gradient(#0E2140, #0E2140) padding-box, var(--grad) border-box; box-shadow: var(--shadow); }
-.hero-card::before { content: ""; position: absolute; top: 0; left: 0; right: 0; height: 2px; background: linear-gradient(90deg, transparent, var(--mint), transparent) no-repeat; background-size: 40% 100%; animation: sweep 4.5s linear infinite; }
+  background: linear-gradient(#0E2140, #0E2140) padding-box, linear-gradient(90deg, rgba(45, 212, 191, .35), rgba(37, 99, 235, .35)) border-box; box-shadow: var(--shadow); }
 .hero-card h2 { font-size: 26px; font-weight: 800; letter-spacing: -.03em; line-height: 1.2; }
 .hero-meta, .acts { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; }
 .none { display: block !important; color: var(--muted); font-size: 14px; } [hidden] { display: none !important; }
 .feed ul, .tl { list-style: none; margin: 16px 0 0; padding: 0; display: grid; gap: 14px; }
 .feed li { display: grid; grid-template-columns: 12px minmax(0, 1fr); gap: 12px; align-items: start; }
-.dotk { width: 10px; height: 10px; margin-top: 6px; border-radius: 50%; background: var(--mint); box-shadow: 0 0 10px var(--mint); }
-.dotk.ok { background: var(--ok); box-shadow: 0 0 10px var(--ok); } .dotk.warn { background: #FBBF24; box-shadow: 0 0 10px #FBBF24; }
+.dotk { width: 10px; height: 10px; margin-top: 6px; border-radius: 50%; background: var(--mint); }
+.dotk.ok { background: var(--ok); } .dotk.warn { background: #FBBF24; }
 .feed b { display: block; font-size: 14px; font-weight: 600; } .feed .when { font-size: 12px; color: var(--muted); }
 .tl { font-size: 14px; grid-template-columns: repeat(2, minmax(0, 1fr)); column-gap: 32px; } .tl li { display: block; } .tl .mono { color: var(--mint); }
 .empty { display: grid; justify-items: center; gap: 10px; padding: 40px 16px; text-align: center; color: var(--muted); }
@@ -70,7 +69,6 @@
 dialog { padding: 22px; border: 1px solid rgba(255, 255, 255, .12); border-radius: 18px; color: #E6EDF7; background: #0F2140; max-width: min(420px, calc(100vw - 32px)); box-shadow: 0 24px 70px rgba(0, 0, 0, .5); }
 dialog::backdrop { background: rgba(5, 12, 24, .6); } dialog p { margin-bottom: 16px; font-weight: 600; } dialog .btn.ghost { color: #E6EDF7; }
 
-@keyframes sweep { from { background-position-x: -60%; } to { background-position-x: 160%; } }
 @keyframes flash { from { background-color: rgba(45, 212, 191, .28); } to { background-color: transparent; } }
 @keyframes slide { from { transform: translateX(-14px); opacity: 0; } to { transform: none; opacity: 1; } }
 .drawer.open ~ .toasts { top: 20px; bottom: auto; left: 20px; right: auto; }

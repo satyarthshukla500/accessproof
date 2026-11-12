@@ -212,7 +212,7 @@ def help_page(order_id):
     order = buyer_order(order_id)
     wants_json = request.is_json
     if request.method == "POST":
-        if limits.rate_limited("help:" + client_ip()):
+        if limits.rate_limited("help:" + client_ip(), 30):  # a real conversation needs room; the model quota is the real limit
             if wants_json:
                 return jsonify(error="Too many requests. Try again later."), 429
             return render_template("message.html", title="Slow down", text="Too many requests. Try again later."), 429

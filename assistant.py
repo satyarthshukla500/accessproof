@@ -76,20 +76,21 @@ def call_model(system, user):
     from google import genai
     from google.genai import types
     try:
-        fast = system is HELP_SYSTEM  # a buyer is waiting: one attempt, fourteen seconds, then the template reply
-        client = genai.Client(api_key=os.environ["GEMINI_API_KEY"], http_options=types.HttpOptions(timeout=14000 if fast else 25000))
+        fast = system is HELP_SYSTEM  # a buyer is waiting: twelve seconds, one quick retry only when the server says it is busy, then the template reply
+        client = genai.Client(api_key=os.environ["GEMINI_API_KEY"], http_options=types.HttpOptions(timeout=12000 if fast else 25000))
     except KeyError as e:
         raise ModelUnavailable() from e
     cfg = types.GenerateContentConfig(system_instruction=system, response_mime_type="application/json", temperature=0.2)
-    tries = 1 if fast else 2
+    tries = 2
     for attempt in range(tries):
         try:
             return client.models.generate_content(model=os.environ["GEMINI_MODEL"], contents=user, config=cfg).text
         except Exception as e:
             log.warning("model error: %s", str(e)[:200])
-            if attempt == tries - 1 or not any(c in str(e) for c in ("429", "503", "504", "RESOURCE_EXHAUSTED", "UNAVAILABLE", "timed out", "Timeout")):
+            busy = ("429", "503", "RESOURCE_EXHAUSTED", "UNAVAILABLE") if fast else ("429", "503", "504", "RESOURCE_EXHAUSTED", "UNAVAILABLE", "timed out", "Timeout")
+            if attempt == tries - 1 or not any(c in str(e) for c in busy):
                 raise ModelUnavailable() from e
-            time.sleep(retry_delay(e))
+            time.sleep(min(retry_delay(e), 1.5) if fast else retry_delay(e))
 
 
 def parse(text):

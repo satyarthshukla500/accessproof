@@ -51,6 +51,10 @@ CHECK = """() => {
     }
   }
   if (document.documentElement.scrollWidth > window.innerWidth + 1) issues.push('page scrolls horizontally: ' + document.documentElement.scrollWidth + '>' + window.innerWidth);
+  document.querySelectorAll('.chain-row').forEach((row) => {  // the blocks of one chain must line up: same top, same height
+    const bs = [...row.querySelectorAll('.block')].map((e) => e.getBoundingClientRect()).filter((r) => r.width > 1);
+    if (bs.some((r) => Math.abs(r.top - bs[0].top) > 1 || Math.abs(r.height - bs[0].height) > 1)) issues.push('misaligned proof blocks');
+  });
   return issues.slice(0, 12);
 }"""
 

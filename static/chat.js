@@ -26,7 +26,7 @@ function receipts(events) {
   const ul = el("ul", "receipts");
   events.forEach((e) => {
     const li = el("li");
-    li.append(el("span", "", e.name), el("span", "mono", "#" + e.id + " · " + e.when));
+    li.append(el("span", "", e.name), el("span", "mono", e.when));
     ul.append(li);
   });
   return ul;
@@ -51,7 +51,7 @@ function reply(r) {
   if (r.refund) kids.push(el("p", "small muted", "I've passed a refund request to the seller. A refund only happens if the seller approves it."));
   const acts = el("div", "acts");
   if (r.link) { const a = el("a", "btn sm", "Download again"); a.href = r.link; acts.append(a); }
-  if (r.outcome === "resent" || r.outcome === "open") acts.append(button("That solved it", "ghost solved", () => solved(r.id, acts)));
+  if ((r.outcome === "resent" || r.outcome === "open") && r.intent !== "OTHER" && r.intent !== "OFF_TOPIC") acts.append(button("That solved it", "ghost solved", () => solved(r.id, acts)));
   if (!r.flagged && !r.refund && ["NOT_RECEIVED", "CANT_OPEN", "WANTS_REFUND", "NOT_AS_DESCRIBED"].includes(r.intent)) acts.append(button("Request refund from seller", "ghost", () => send("I'd like a refund, please pass this to the seller.")));
   if (acts.children.length) kids.push(acts);
   if (r.follow_ups && r.follow_ups.length) {
@@ -66,6 +66,7 @@ async function send(text) {
   text = text.trim();
   if (!text) return;
   add("me", el("div", "bubble", text));
+  if (msgs.querySelectorAll(".msg.me").length === 1) suggestions(false);  // after the first question the chips step aside
   input.value = "";
   const typing = el("div", "typing");
   typing.append(el("i"), el("i"), el("i"));
@@ -81,6 +82,13 @@ async function send(text) {
     reply({ reply: "I could not reach the server. Please try again.", events: [], flagged: true });
   }
 }
+
+const qtoggle = document.getElementById("qtoggle");
+function suggestions(show) {  // suggestions are a help, never a requirement: one click hides them
+  chat.classList.toggle("nosug", !show);
+  qtoggle.textContent = show ? "Hide suggestions" : "Show suggestions";
+}
+qtoggle.addEventListener("click", () => suggestions(chat.classList.contains("nosug")));
 
 form.addEventListener("submit", (e) => { e.preventDefault(); send(input.value); });
 input.addEventListener("keydown", (e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); send(input.value); } });

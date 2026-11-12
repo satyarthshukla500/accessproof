@@ -354,9 +354,10 @@ def test_store_button_is_paypal_only():
 def test_pages_show_the_proof_chain(ctx, monkeypatch):
     appmod, c = bought(ctx, monkeypatch)
     store = c.get("/").data.decode()
-    assert "Hash chain verified" in store and "Paid" in store and "example" not in store.split("Live proof chain")[1][:40]
+    assert "Record verified" in store and "Step 1" in store and "Paid" in store and "#1" not in store and "example" not in store.split("Live proof chain")[1][:40]
     success = c.get("/success/ORD1" + tok()).data.decode()
-    assert "Your proof chain so far" in success and "Link issued" in success and "next" in success
+    assert "Your delivery record" in success and "Link issued" in success and "next" in success and "Step 2" in success
+    assert "What would you like to do next?" in success and "/login" in success and "Back to the store" in success  # no dead end after paying
 
 
 def test_chat_buttons_only_on_the_latest_answer(ctx, monkeypatch):
@@ -508,3 +509,17 @@ def test_demo_orders_are_throttled(ctx):
     appmod, c = ctx
     codes = [c.post("/api/demo-order").status_code for _ in range(10)]
     assert codes[:8] == [200] * 8 and codes[8:] == [429, 429]
+
+
+def test_the_chat_page_has_a_way_out_and_optional_suggestions(ctx, monkeypatch):
+    appmod, c = bought(ctx, monkeypatch)
+    page = c.get("/order/ORD1/help" + tok()).data.decode()
+    assert "Back to your order" in page and "Where to next" in page and 'id="qtoggle"' in page and "Hide suggestions" in page
+    assert "Hash chain" not in page and "#1 " not in page
+
+
+def test_the_guide_is_a_real_multi_page_document():
+    import pymupdf
+    doc = pymupdf.open(os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "products", "notion-freelancer-starter-kit.pdf"))
+    text = " ".join(pg.get_text() for pg in doc)
+    assert len(doc) >= 10 and all(w in text for w in ("Clients", "Projects", "Invoices", "Friday review", "Formula cheat sheet", "Copy-paste templates"))

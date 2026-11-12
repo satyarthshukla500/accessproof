@@ -13,7 +13,12 @@
       <li><div><b>Every claim is checked in code</b>If a reply cites an event that does not exist, it is thrown away.</div></li>
       <li><div><b>Tricks get flagged</b>Messages like "refund me $500" go to the seller. Refunds are only decided by the seller.</div></li>
     </ol>
-    <div class="card chain-card"><p class="eyebrow">Your proof chain</p>{{ proof(chain) }}</div>
+    <div class="card whatnext">
+      <p class="eyebrow">Where to next</p>
+      <a class="nextrow" href="/success/{{ order.id }}?t={{ token }}">{{ icon("download") }}<span><b>Back to your order</b>Download the file again</span></a>
+      <a class="nextrow" href="/login">{{ icon("grid") }}<span><b>See the seller side</b>The owner's dashboard</span></a>
+      <a class="nextrow" href="/">{{ icon("bag") }}<span><b>Back to the store</b></span></a>
+    </div>
   </aside>
   <section class="chat rise d2" id="chat" data-order="{{ order.id }}" data-token="{{ token }}" aria-label="Support chat">
     <header class="chat-head">
@@ -27,15 +32,16 @@
       <div class="msg me"><div class="bubble">{{ h.message }}</div></div>
       <div class="msg bot">
         <div class="bubble">{{ h.reply }}</div>
-        {% if h.events %}<ul class="receipts">{% for e in h.events %}<li><span>{{ e.name }}</span><span class="mono">#{{ e.id }} · {{ e.when }}</span></li>{% endfor %}</ul>{% endif %}
+        {% if h.events %}<ul class="receipts">{% for e in h.events %}<li><span>{{ e.name }}</span><span class="mono">{{ e.when }}</span></li>{% endfor %}</ul>{% endif %}
         {% if h.outcome == 'refund_pending' %}<p class="small muted">I've passed a refund request to the seller. A refund only happens if the seller approves it.</p>{% endif %}
         {% if loop.last and h.outcome in ('resent', 'open', 'refund_pending') %}<div class="acts">
           {% if h.action == 'RESEND' %}<a class="btn sm" href="/d/{{ token }}">Download again</a>{% endif %}
-          {% if h.outcome in ('resent', 'open') %}<button class="btn sm ghost solved" type="button" data-id="{{ h.id }}">That solved it</button>{% endif %}
+          {% if h.outcome in ('resent', 'open') and h.intent not in ('OTHER', 'OFF_TOPIC') %}<button class="btn sm ghost solved" type="button" data-id="{{ h.id }}">That solved it</button>{% endif %}
         </div>{% endif %}
       </div>
       {% endfor %}
     </div>
+    <div class="quickbar"><button class="link" id="qtoggle" type="button">Hide suggestions</button></div>
     <div class="quick" id="quick">
       <button type="button" data-text="I never got my download">I never got my download</button>
       <button type="button" data-text="The file won't open">The file won't open</button>

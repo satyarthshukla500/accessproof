@@ -81,6 +81,9 @@ def data():
     orders = db.query("SELECT * FROM orders ORDER BY created_at DESC")
     chain = {o["id"]: ledger.verify(o["id"]) for o in orders}
     rows = db.query("SELECT * FROM ledger ORDER BY id DESC")
+    seen = {}
+    for r in reversed(rows):  # the step of an event inside its own order: 1, 2, 3 ...
+        seen[r["order_id"]] = r["step"] = seen.get(r["order_id"], 0) + 1
     disputes = db.query("SELECT * FROM disputes ORDER BY (source='paypal') DESC, created_at DESC")
     cache = {}
     for d in disputes:

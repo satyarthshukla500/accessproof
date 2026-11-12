@@ -11,8 +11,15 @@
   <a class="btn big" id="download" href="{{ link }}">{{ icon("download") }}Download your file</a>
   <p class="small muted">Your link is signed and expires in 7 days. We record when it is opened and used.</p>
   <div class="strip">
-    <p class="eyebrow">Your proof chain so far</p>
+    <p class="eyebrow">Your delivery record</p>
     {{ proof(chain, next_label) }}
+    <p class="small muted">Every step is saved in order. If anyone edited an old step, the record would show as broken.</p>
+  </div>
+  <div class="whatnext">
+    <p class="eyebrow">What would you like to do next?</p>
+    <a class="nextrow" href="/order/{{ order.id }}/help?t={{ token }}">{{ icon("chat") }}<span><b>Ask the assistant</b>Questions about your order, the shop or refunds</span></a>
+    <a class="nextrow" href="/login">{{ icon("grid") }}<span><b>See the seller side</b>The dashboard the shop owner uses (needs the seller password)</span></a>
+    <a class="nextrow" href="/">{{ icon("bag") }}<span><b>Back to the store</b>Start over or share the shop</span></a>
   </div>
 </section>
 <a class="help-pill" href="/order/{{ order.id }}/help?t={{ token }}" data-overlap-ok>

@@ -83,11 +83,11 @@ function chainEl(blocks, label) {
   blocks.forEach((b, i) => {
     const li = el("li", "block" + (i === blocks.length - 1 ? " last" : ""));
     li.title = b.when;
-    li.append(el("span", "num", "#" + b.id), el("span", "lbl", b.label), el("span", "tm", b.short));
+    li.append(el("span", "num", "Step " + (i + 1)), el("span", "lbl", b.label), el("span", "tm", b.short));
     ol.append(li);
   });
   const v = el("p", "verified");
-  v.append(svg("shield"), el("span", "", label || "Hash chain verified"));
+  v.append(svg("shield"), el("span", "", label || "Record verified"));
   box.append(ol, v);
   return box;
 }
@@ -166,7 +166,7 @@ function renderLists() {
   if (!data.timeline.length) tl.append(el("li", "none", "No proof events yet."));
   data.timeline.forEach((t) => {
     const li = el("li");
-    li.append(el("span", "mono", "#" + t.id + " "), el("span", "", t.name + " · " + t.when));
+    li.append(el("span", "", t.name + " · " + t.when));
     tl.append(li);
   });
 }
@@ -224,7 +224,7 @@ function renderDrawer() {
   d.claims.forEach((c) => {
     const row = el("div", "claim");
     const evs = el("div", "evs");
-    c.event_ids.forEach((id) => { const e = d.events[id]; { const text = el("span", "", "#" + id + " · " + (e ? e.name + " · " : "event")); if (e) text.append(el("time", "", e.when)); const chip = el("span", "ev"); chip.append(text); evs.append(chip); } });
+    c.event_ids.forEach((id) => { const e = d.events[id]; { const text = el("span", "", e ? e.name + " · " : "event"); if (e) text.append(el("time", "", e.when)); const chip = el("span", "ev"); chip.append(text); evs.append(chip); } });
     row.append(el("p", "", c.text), evs);
     list.append(row);
   });

@@ -45,7 +45,9 @@ def off_topic(message):
     return bool(OFF_TOPIC.search(normalise(message)))
 
 ABOUT = (
-    "- The shop sells one digital PDF guide, the Notion Freelancer Starter Kit: databases for clients, projects and invoices, and a weekly review checklist. It costs 29.00 USD and is paid through PayPal. This is a PayPal sandbox demo, so no real money moves.\n"
+    "- The shop sells one digital PDF guide, the Notion Freelancer Starter Kit (11 pages, 29.00 USD, paid through PayPal; this is a PayPal sandbox demo, so no real money moves). Its chapters: set up in twenty minutes (five connected databases), Clients, Projects, Invoices (with an overdue formula), Tasks, the Friday review checklist, four copy-paste message templates (proposal, kick-off, invoice reminder, wrap-up), a cheat sheet of nine formulas, and questions and common mistakes. It works on Notion's free plan.\n"
+    "- To get the file: use the Download button on the confirmation page, or the Download again button in this chat. The file is a PDF named notion-freelancer-starter-kit.pdf.\n"
+    "- The seller has a private dashboard with every order, the delivery record, support chats and disputes; buyers never see it.\n"
     "- Every step of a purchase (payment captured, download link issued, link opened, file downloaded) is written to an append-only ledger. Each row stores the hash of the row before it, so editing an old row breaks the chain and the dashboard shows it as Broken.\n"
     "- Download links are signed and valid for 7 days.\n"
     "- Only the seller can approve a refund. You can pass a refund request on to the seller, but nothing is refunded until the seller approves it.\n"

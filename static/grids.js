@@ -41,10 +41,10 @@ const Grids = (() => {
   const DEFS = {
     orders: [{ headerName: "Order", width: 230, cellRenderer: cell((r) => [idCell(r, r.id)]) }, { field: "payer_email", headerName: "Payer", flex: 1, minWidth: 190, tooltipField: "payer_email" },
       { field: "amount", headerName: "Amount", width: 100, type: "rightAligned", valueFormatter: (p) => "$" + p.value }, { field: "when", headerName: "Created", width: 205 }, chain],
-    ledger: [{ field: "id", headerName: "ID", width: 90, cellClass: "mono", valueFormatter: (p) => "#" + p.value }, { field: "when", headerName: "Time", width: 205 },
+    ledger: [{ field: "step", headerName: "Step", width: 90, cellClass: "mono" }, { field: "when", headerName: "Time", width: 205 },
       { field: "event", headerName: "Event", flex: 1, minWidth: 190, tooltipField: "ua", valueFormatter: (p) => EVENTS[p.value] || p.value }, { field: "order_id", headerName: "Order", width: 130, cellClass: "mono", tooltipField: "order_id", valueFormatter: (p) => (p.value ? "…" + String(p.value).slice(-6) : "") },
       { field: "ip", headerName: "IP", width: 130, valueFormatter: dash }, chain],
-    help: [{ headerName: "ID", width: 100, cellRenderer: cell((r) => [idCell(r, "#" + r.id)]) }, { field: "message", headerName: "Buyer message", flex: 2, minWidth: 220, wrapText: true, autoHeight: true, tooltipField: "message" },
+    help: [{ headerName: "From", width: 110, cellRenderer: cell((r) => [idCell(r, "Buyer")]) }, { field: "message", headerName: "Buyer message", flex: 2, minWidth: 220, wrapText: true, autoHeight: true, tooltipField: "message" },
       { field: "intent", headerName: "Intent", width: 140, valueFormatter: (p) => INTENTS[p.value] || p.value },
       { field: "outcome", headerName: "Outcome", width: 150, cellRenderer: (p) => pill(pretty(p.value), OUTCOMES[p.value]) },
       { field: "flagged", headerName: "Flag", width: 100, sortable: false, filter: false, cellRenderer: (p) => (p.value ? pill("Flagged", "p-warn") : "") }, { headerName: "Refund", width: 170, sortable: false, filter: false, cellRenderer: refundCell }],
@@ -55,7 +55,7 @@ const Grids = (() => {
   // phone: one stacked column, plus the row's button where there is one
   const PHONE = {
     orders: [{ headerName: "Order", flex: 1, minWidth: 190, autoHeight: true, cellRenderer: cell((r) => [stack(el("span", "mono", r.id), el("span", "muted small", r.payer_email + " · $" + r.amount), chainPill(r.chain))]) }],
-    ledger: [{ headerName: "Event", flex: 1, minWidth: 190, autoHeight: true, cellRenderer: cell((r) => [stack(el("b", "", EVENTS[r.event] || r.event), el("span", "mono muted small", "#" + r.id + " · " + r.when), chainPill(r.chain))]) }],
+    ledger: [{ headerName: "Event", flex: 1, minWidth: 190, autoHeight: true, cellRenderer: cell((r) => [stack(el("b", "", EVENTS[r.event] || r.event), el("span", "mono muted small", r.when), chainPill(r.chain))]) }],
     help: [{ headerName: "Chat", flex: 1, minWidth: 190, autoHeight: true, cellRenderer: cell((r) => { const box = stack(el("span", "msgtxt", r.message), el("span", "muted small", (INTENTS[r.intent] || r.intent) + " · " + pretty(r.outcome)), demoPill(r.source));
       if (["pending", "failed"].includes(r.refund_status)) box.append(actButton("Approve refund", "/seller/refund/" + r.refund_id + "/approve", "Approve this refund? It is paid through PayPal (sandbox)."));
       return [box]; }) }],

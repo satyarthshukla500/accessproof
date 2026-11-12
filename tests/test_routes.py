@@ -503,7 +503,7 @@ def test_demo_orders_never_reach_the_dashboard_numbers_or_paypal(ctx, client_log
     with c.session_transaction() as s:
         s.update(seller=True, csrf="x", t=__import__("time").time())
     r = c.post("/seller/refund/%d/approve" % rid, headers={"X-CSRF": "x"})
-    assert r.status_code == 400 and "Demo order" in r.get_json()["message"]
+    assert r.status_code == 200 and "DEMO-NO-MONEY-MOVED" in r.get_json()["message"]  # recorded, but PayPal is never called
 
 
 def test_demo_orders_are_throttled(ctx):

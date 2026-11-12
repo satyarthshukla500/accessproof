@@ -114,10 +114,13 @@ def approve_refund(rid):
         return reply(False, "Refund request not found or already handled", 404)
     if db.one("SELECT id FROM refund_requests WHERE order_id=? AND status='approved'", (rr["order_id"],)):
         return reply(False, "This order was already refunded", 409)
-    if rr["source"] != "real":
-        return reply(False, "Demo order: it has no real PayPal capture", 400)
+    if rr["source"] not in ("real", "demo"):
+        return reply(False, "Sample order: there is nothing to refund", 400)
     try:
-        res = paypal.refund(rr["capture_id"], rr["amount"], "Goodwill refund approved by the seller", "refund-%d-%s" % (rid, rr["capture_id"]))
+        if rr["source"] == "demo":  # a demo order took no payment, so the refund is recorded but PayPal is never called
+            res = {"id": "DEMO-NO-MONEY-MOVED", "status": "COMPLETED"}
+        else:
+            res = paypal.refund(rr["capture_id"], rr["amount"], "Goodwill refund approved by the seller", "refund-%d-%s" % (rid, rr["capture_id"]))
     except paypal.PayPalError:
         log.exception("refund failed")
         db.run("UPDATE refund_requests SET status='failed' WHERE id=?", (rid,))

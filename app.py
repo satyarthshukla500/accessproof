@@ -99,7 +99,7 @@ def log_event(order_id, event, detail=None):
 
 @app.get("/")
 def store():
-    return render_template("store.html", product=PRODUCT, chain=ledger.latest_chain())
+    return render_template("store.html", product=PRODUCT)
 
 
 @app.get("/healthz")

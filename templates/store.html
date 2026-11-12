@@ -8,10 +8,8 @@
     <h1 class="display">Buy it once.<br><span class="grad-text">Proof forever.</span></h1>
     <p class="lead">An 11-page guide to running clients, projects and invoices in Notion, with ready-to-paste templates. Every step of your purchase is sealed in a tamper&#8209;evident chain, so if anything goes wrong the proof is already there.</p>
     <div class="card chain-card">
-      <p class="eyebrow">Live proof chain{% if example %} · example{% endif %}</p>
-      {% if example %}
-        {{ proof([{"id": 47, "label": "Paid", "short": "10:02", "when": ""}, {"id": 48, "label": "Link issued", "short": "10:02", "when": ""}, {"id": 49, "label": "Opened", "short": "10:03", "when": ""}, {"id": 50, "label": "Downloaded", "short": "10:03", "when": ""}]) }}
-      {% else %}{{ proof(chain) }}{% endif %}
+      <p class="eyebrow">What gets recorded for every purchase</p>
+      {{ proof([{"label": "Paid", "short": "", "when": ""}, {"label": "Link issued", "short": "", "when": ""}, {"label": "Opened", "short": "", "when": ""}, {"label": "Downloaded", "short": "", "when": ""}]) }}
     </div>
   </div>
   <div class="card checkout rise d2">
@@ -33,7 +31,7 @@
 </section>
 <section class="steps rise d3" aria-label="How AccessProof protects this purchase">
   <div class="card step"><span class="ico-box">{{ icon("bag") }}</span><h3>1 · You pay with PayPal</h3><p>One button, handled entirely by PayPal.</p></div>
-  <div class="card step"><span class="ico-box">{{ icon("link") }}</span><h3>2 · Delivery is sealed</h3><p>Payment, link, open and download are chained together with hashes.</p></div>
+  <div class="card step"><span class="ico-box">{{ icon("link") }}</span><h3>2 · Delivery is sealed</h3><p>Payment, link, open and download are saved in order and locked together.</p></div>
   <div class="card step"><span class="ico-box">{{ icon("chat") }}</span><h3>3 · The proof answers</h3><p>If something goes wrong, you get help from your own delivery record.</p></div>
 </section>
 <p class="foot">AccessProof demo store · PayPal sandbox only.</p>

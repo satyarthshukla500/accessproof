@@ -354,7 +354,8 @@ def test_store_button_is_paypal_only():
 def test_pages_show_the_proof_chain(ctx, monkeypatch):
     appmod, c = bought(ctx, monkeypatch)
     store = c.get("/").data.decode()
-    assert "Record verified" in store and "Step 1" in store and "Paid" in store and "#1" not in store and "example" not in store.split("Live proof chain")[1][:40]
+    assert "Record verified" in store and "Step 1" in store and "Paid" in store and "#1" not in store
+    assert "What gets recorded for every purchase" in store and "hashes" not in store  # a clean example, never a stranger's activity
     success = c.get("/success/ORD1" + tok()).data.decode()
     assert "Your delivery record" in success and "Link issued" in success and "next" in success and "Step 2" in success
     assert "What would you like to do next?" in success and "/login" in success and "Back to the store" in success  # no dead end after paying
@@ -523,3 +524,11 @@ def test_the_guide_is_a_real_multi_page_document():
     doc = pymupdf.open(os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "products", "notion-freelancer-starter-kit.pdf"))
     text = " ".join(pg.get_text() for pg in doc)
     assert len(doc) >= 10 and all(w in text for w in ("Clients", "Projects", "Invoices", "Friday review", "Formula cheat sheet", "Copy-paste templates"))
+
+
+def test_the_success_page_gives_download_feedback_and_refreshes_the_record(ctx, monkeypatch):
+    appmod, c = bought(ctx, monkeypatch)
+    page = c.get("/success/ORD1" + tok()).data.decode()
+    assert 'id="dlnote"' in page and "success.js" in page
+    js = open(os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "static", "success.js"), encoding="utf-8").read()
+    assert "Your download has started" in js and "replaceWith" in js

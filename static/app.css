@@ -63,7 +63,7 @@ input:focus, textarea:focus { outline: 2px solid var(--blue); outline-offset: 1p
   border-radius: 18px; background: linear-gradient(var(--blk), var(--blk)), var(--bg); border: 1.5px solid var(--mint); text-align: center; animation: glow 3.2s ease-in-out infinite; }
 .block:nth-child(2) { animation-delay: .4s; } .block:nth-child(3) { animation-delay: .8s; } .block:nth-child(4) { animation-delay: 1.2s; }
 .block.last { background: linear-gradient(var(--blk-last), var(--blk-last)), var(--bg); border-color: var(--blue); }
-.block.next { background: transparent; border: 1.5px dashed var(--muted); animation: none; opacity: .85; }
+.block.next { background: var(--bg); border: 1.5px dashed var(--muted); animation: none; }
 .block .num { font: 700 13px "JetBrains Mono", monospace; color: var(--ink); } .block .lbl { font-size: 13px; font-weight: 600; color: var(--ink); }
 .block .tm { font: 500 11px "JetBrains Mono", monospace; color: var(--muted); }
 @container (max-width: 440px) { .chain-row { gap: 8px; } .block .lbl { font-size: 11px; letter-spacing: -.01em; } .block { padding: 6px 2px; } }
@@ -74,8 +74,8 @@ input:focus, textarea:focus { outline: 2px solid var(--blue); outline-offset: 1p
 .hero-copy { display: flex; flex-direction: column; gap: 22px; align-items: flex-start; }
 .chain-card { width: 100%; max-width: 560px; padding: 20px 24px 18px; display: flex; flex-direction: column; gap: 16px; }
 .checkout { display: flex; flex-direction: column; gap: 18px; }
-.product { display: grid; grid-template-columns: 112px 1fr; gap: 18px; align-items: center; }
-.cover { width: 112px; height: 149px; border-radius: 10px; object-fit: cover; box-shadow: 0 14px 30px rgba(11, 27, 51, .28); animation: float 6s ease-in-out infinite; }
+.product { display: grid; grid-template-columns: 132px 1fr; gap: 18px; align-items: center; }
+.cover { width: 132px; height: 176px; border-radius: 10px; object-fit: cover; box-shadow: 0 14px 30px rgba(11, 27, 51, .28); }
 .product h2 { font-size: 22px; font-weight: 800; letter-spacing: -.02em; line-height: 1.2; }
 .price { font-size: 34px; font-weight: 800; letter-spacing: -.03em; font-variant-numeric: tabular-nums; } .price small { font-size: 14px; font-weight: 600; color: var(--muted); letter-spacing: 0; }
 .ticks { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; color: var(--ink2); font-size: 15px; }
@@ -151,7 +151,6 @@ input:focus, textarea:focus { outline: 2px solid var(--blue); outline-offset: 1p
 @keyframes rise { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: none; } }
 @keyframes pulse { from { background-position: -30% 0; } to { background-position: 130% 0; } }
 @keyframes glow { 0%, 100% { box-shadow: 0 0 0 0 rgba(45, 212, 191, 0); } 50% { box-shadow: 0 0 22px 2px rgba(45, 212, 191, .35); } }
-@keyframes float { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-6px); } }
 @keyframes dot { 0% { box-shadow: 0 0 0 0 rgba(45, 212, 191, .55); } 70%, 100% { box-shadow: 0 0 0 8px rgba(45, 212, 191, 0); } }
 @keyframes ring { 0% { transform: scale(1); opacity: .6; } 100% { transform: scale(1.35); opacity: 0; } }
 @keyframes pop { from { transform: scale(.6); opacity: 0; } to { transform: none; opacity: 1; } }

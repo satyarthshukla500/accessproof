@@ -1,4 +1,4 @@
-"""Screenshots every page at 1280x800, 768x1024 and 390x844, logs console errors and failed requests,
+"""Screenshots every page at 1920x1080, 1280x800, 768x1024 and 390x844, logs console errors and failed requests,
 and checks that nothing overlaps, is clipped sideways or makes the page scroll horizontally.
 Usage: python scripts/shots.py <order id>   (set SHOT_HELP=1 to also send one chat message; needs the app running)"""
 import base64
@@ -15,7 +15,7 @@ from playwright.sync_api import sync_playwright
 load_dotenv()
 BASE = os.environ.get("APP_URL", "http://localhost:5000")
 OUT = os.environ.get("SHOTS_DIR", "shots")
-SIZES = {"1280": (1280, 800), "768": (768, 1024), "390": (390, 844)}
+SIZES = {"1920": (1920, 1080), "1280": (1280, 800), "768": (768, 1024), "390": (390, 844)}
 os.makedirs(OUT, exist_ok=True)
 
 CHECK = """() => {

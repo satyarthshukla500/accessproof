@@ -471,3 +471,40 @@ def test_an_old_order_cannot_download_even_with_a_fresh_token(ctx):
     appmod, c = ctx
     order("OLD2", age="8 day")
     assert c.get("/d/" + appmod.sign("OLD2")).status_code == 403
+
+
+def test_demo_order_lets_a_judge_try_the_assistant_without_paying(ctx, monkeypatch):
+    appmod, c = ctx
+    monkeypatch.setattr(appmod.assistant, "call_model", lambda s, u: json.dumps({"intent": "NOT_RECEIVED", "reply": "Your link was issued.", "cited_event_ids": [2], "suggested_action": "RESEND", "follow_ups": ["Resend my link"]}))
+    r = c.post("/api/demo-order")
+    assert r.status_code == 200
+    path = r.get_json()["redirect"]
+    oid = path.split("/success/")[1].split("?")[0]
+    assert db.one("SELECT source FROM orders WHERE id=?", (oid,))["source"] == "demo"
+    assert [e["event"] for e in ledger.rows(oid)] == ["PURCHASE_CAPTURED", "DELIVERY_EMAIL_LOGGED"]
+    assert b"Demo order" in c.get(path).data
+    reply = c.post("/order/%s/help?t=%s" % (oid, appmod.sign(oid)), json={"message": "I never got it"}).get_json()
+    assert reply["reply"] == "Your link was issued." and reply["follow_ups"] == ["Resend my link"]
+    assert db.one("SELECT source FROM help_requests WHERE order_id=?", (oid,))["source"] == "demo"
+    assert c.get("/d/" + appmod.sign(oid)).status_code == 200  # a demo order may download the sample guide
+
+
+def test_demo_orders_never_reach_the_dashboard_numbers_or_paypal(ctx, client_login=None):
+    appmod, c = ctx
+    c.post("/api/demo-order")
+    oid = db.one("SELECT id FROM orders WHERE source='demo'")["id"]
+    db.run("INSERT INTO help_requests(order_id,message,intent,reply,action,cited,flagged,outcome,created_at,source) VALUES(?,?,?,?,?,?,?,?,datetime('now'),'demo')",
+           (oid, "hi", "OTHER", "hello", "NONE", "[]", 0, "deflected"))
+    import overview
+    assert overview.feed() == [] and overview.timeline() == []
+    rid = db.run("INSERT INTO refund_requests(order_id,amount) VALUES(?,?)", (oid, "29.00"))
+    with c.session_transaction() as s:
+        s.update(seller=True, csrf="x", t=__import__("time").time())
+    r = c.post("/seller/refund/%d/approve" % rid, headers={"X-CSRF": "x"})
+    assert r.status_code == 400 and "Demo order" in r.get_json()["message"]
+
+
+def test_demo_orders_are_throttled(ctx):
+    appmod, c = ctx
+    codes = [c.post("/api/demo-order").status_code for _ in range(10)]
+    assert codes[:8] == [200] * 8 and codes[8:] == [429, 429]

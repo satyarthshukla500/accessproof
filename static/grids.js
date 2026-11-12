@@ -16,7 +16,7 @@ const Grids = (() => {
   const cell = (build) => (p) => { const box = el("span", "cellbtn"); build(p.data).forEach((n) => box.append(n)); return box; };
   const stack = (...kids) => { const box = el("div", "stack"); box.append(...kids); return box; };
   const sourcePill = (s) => (s === "paypal" ? pill("Real · PayPal sandbox", "p-real") : s === "sample" ? pill("Sample (not from PayPal)", "p-sample") : s === "seed" ? pill("Seed", "p-seed") : "");
-  const demoPill = (s) => (s === "seed" || s === "sample" ? pill(s === "seed" ? "Seed" : "Sample", s === "seed" ? "p-seed" : "p-sample") : "");
+  const demoPill = (s) => (s === "seed" || s === "sample" || s === "demo" ? pill(s === "seed" ? "Seed" : s === "demo" ? "Demo" : "Sample", s === "seed" ? "p-seed" : "p-sample") : "");
   const dash = (p) => p.value || "—";
   const chainPill = (v) => pill(v === "ok" ? "Verified" : "Broken", v === "ok" ? "p-ok" : "p-warn");
   const chain = { field: "chain", headerName: "Chain", width: 110, cellRenderer: (p) => chainPill(p.value) };

@@ -173,3 +173,8 @@ input:focus, textarea:focus { outline: 2px solid var(--blue); outline-offset: 1p
 #paypal-button iframe { color-scheme: light; }
 @media (max-width: 900px) { .qf { height: 44px; } }
 @media (max-width: 520px) { #tools { flex-wrap: nowrap; } .qf { flex: 1; width: auto; min-width: 0; } }
+.follow { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
+.follow button { min-height: 32px; padding: 0 12px; border-radius: 999px; font: 600 12.5px Inter, sans-serif; color: var(--ink2); background: transparent; border: 1px dashed var(--line); cursor: pointer; }
+.follow button:hover { border-color: var(--mint); color: var(--ink); }
+.demo-btn { width: 100%; margin-top: 10px; }
+@media (max-width: 900px) { .follow button { min-height: 44px; } }

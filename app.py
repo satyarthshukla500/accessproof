@@ -6,6 +6,7 @@ import logging
 import math
 import os
 import re
+import secrets
 import time
 
 from dotenv import load_dotenv
@@ -124,6 +125,19 @@ def create_order():
         return jsonify(error="Could not start checkout"), 502
 
 
+@app.post("/api/demo-order")
+def demo_order():
+    """A judge's shortcut: a demo order with a payment and a link already on record, so the assistant can be tried without paying. It never touches PayPal."""
+    if limits.rate_limited("demo:" + client_ip(), 8):
+        return jsonify(error="Too many demo orders. Try again later."), 429
+    oid = "DEMO-" + secrets.token_hex(6).upper()
+    db.run("INSERT INTO orders(id,capture_id,payer_email,amount,currency,product,created_at,source) VALUES(?,?,?,?,?,?,datetime('now'),'demo')",
+           (oid, "", "demo@example.invalid", PRODUCT["price"], "USD", PRODUCT["id"]))
+    log_event(oid, "PURCHASE_CAPTURED", {"demo": True, "note": "demo order, no payment taken"})
+    log_event(oid, "DELIVERY_EMAIL_LOGGED", {"to": "demo@example.invalid", "note": "download link issued; no email service is connected"})
+    return jsonify(ok=True, redirect="/success/%s?t=%s" % (oid, sign(oid)))
+
+
 @app.post("/api/orders/<order_id>/capture")
 def capture(order_id):
     if not ID_RE.fullmatch(order_id):
@@ -159,7 +173,7 @@ def capture(order_id):
 
 def buyer_order(order_id):
     """A real order inside the link lifetime, reached with its signed token (?t=); seed rows, sample rows and guessed ids have no buyer pages."""
-    order = db.one("SELECT * FROM orders WHERE id=? AND source='real' AND created_at > datetime('now', ?)", (order_id, "-%d day" % TOKEN_DAYS))
+    order = db.one("SELECT * FROM orders WHERE id=? AND source IN ('real','demo') AND created_at > datetime('now', ?)", (order_id, "-%d day" % TOKEN_DAYS))
     if not order or check(request.values.get("t", "")) != order_id:
         abort(404)
     return order
@@ -178,7 +192,7 @@ def success(order_id):
 @app.get("/d/<token>")
 def download(token):
     order_id = check(token)
-    if not order_id or not db.one("SELECT id FROM orders WHERE id=? AND source='real' AND created_at > datetime('now', ?)", (order_id, "-%d day" % TOKEN_DAYS))             or db.one("SELECT id FROM ledger WHERE order_id=? AND event='REFUND_APPROVED'", (order_id,)):
+    if not order_id or not db.one("SELECT id FROM orders WHERE id=? AND source IN ('real','demo') AND created_at > datetime('now', ?)", (order_id, "-%d day" % TOKEN_DAYS))             or db.one("SELECT id FROM ledger WHERE order_id=? AND event='REFUND_APPROVED'", (order_id,)):
         return render_template("message.html", title="Link not valid",
                                text="This download link is invalid, has expired, or the order was refunded."), 403
     if request.method == "GET" and os.path.exists(PRODUCT["file"]):  # link scanners send HEAD
@@ -211,7 +225,7 @@ def help_page(order_id):
             if result["action"] == "RESEND":
                 log_event(order_id, "LINK_RESENT")
             if wants_json:
-                body = {k: result[k] for k in ("id", "reply", "intent", "action", "flagged", "fallback", "outcome", "refund", "link")}
+                body = {k: result[k] for k in ("id", "reply", "intent", "action", "flagged", "fallback", "outcome", "refund", "link", "follow_ups")}
                 return jsonify(dict(body, events=ledger.public_events(result["events"])))
     rows = ledger.rows(order_id)
     by_id = {r["id"]: r for r in rows}

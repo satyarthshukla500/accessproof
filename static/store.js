@@ -29,4 +29,11 @@ async function start() {
   document.head.appendChild(s);
 }
 
+document.getElementById("demo").addEventListener("click", async (e) => {
+  e.currentTarget.disabled = true;
+  const o = await post("/api/demo-order");
+  if (o.redirect) location.href = o.redirect;
+  else { msg.textContent = o.error || "Could not start the demo."; e.currentTarget.disabled = false; }
+});
+
 start();

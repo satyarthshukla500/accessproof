@@ -93,10 +93,10 @@ def data():
                  can_adjudicate=d["status"] == "UNDER_REVIEW" and has_link(raw, "adjudicate"),
                  can_offer=d["stage"] == "INQUIRY" and d["source"] == "paypal" and d["status"] == "WAITING_FOR_SELLER_RESPONSE")
     # demo rows (source=seed) are left out so the cards only show real and sample activity
-    stats = {"deflected": db.one("SELECT COUNT(*) n FROM help_requests WHERE outcome='deflected' AND source!='seed'")["n"],
-             "filed": db.one("SELECT COUNT(*) n FROM disputes WHERE (last_result LIKE 'Evidence submitted%' OR raw LIKE '%SUBMITTED_BY_SELLER%') AND source!='seed'")["n"]}
+    stats = {"deflected": db.one("SELECT COUNT(*) n FROM help_requests WHERE outcome='deflected' AND source NOT IN ('seed','demo')")["n"],
+             "filed": db.one("SELECT COUNT(*) n FROM disputes WHERE (last_result LIKE 'Evidence submitted%' OR raw LIKE '%SUBMITTED_BY_SELLER%') AND source NOT IN ('seed','demo')")["n"]}
     stats["fees"] = stats["deflected"] * FEE
-    stats["refunds"] = db.one("SELECT COUNT(*) n FROM ledger l JOIN orders o ON o.id=l.order_id WHERE l.event='REFUND_APPROVED' AND o.source!='seed'")["n"]
+    stats["refunds"] = db.one("SELECT COUNT(*) n FROM ledger l JOIN orders o ON o.id=l.order_id WHERE l.event='REFUND_APPROVED' AND o.source NOT IN ('seed','demo')")["n"]
     return jsonify(stats=stats, orders=[dict(o, chain=chain[o["id"]], when=ledger.fmt_ts(o["created_at"])) for o in orders],
                    ledger=[dict(r, chain=chain.get(r["order_id"], ""), when=ledger.fmt_ts(r["ts"])) for r in rows],
                    help=db.query("SELECT h.*, r.id refund_id, r.status refund_status FROM help_requests h "

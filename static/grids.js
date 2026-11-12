@@ -44,7 +44,7 @@ const Grids = (() => {
     ledger: [{ field: "step", headerName: "Step", width: 90, cellClass: "mono" }, { field: "when", headerName: "Time", width: 205 },
       { field: "event", headerName: "Event", flex: 1, minWidth: 190, tooltipField: "ua", valueFormatter: (p) => EVENTS[p.value] || p.value }, { field: "order_id", headerName: "Order", width: 130, cellClass: "mono", tooltipField: "order_id", valueFormatter: (p) => (p.value ? "…" + String(p.value).slice(-6) : "") },
       { field: "ip", headerName: "IP", width: 130, valueFormatter: dash }, chain],
-    help: [{ headerName: "From", width: 110, cellRenderer: cell((r) => [idCell(r, "Buyer")]) }, { field: "message", headerName: "Buyer message", flex: 2, minWidth: 220, wrapText: true, autoHeight: true, tooltipField: "message" },
+    help: [{ headerName: "From", width: 130, cellRenderer: cell((r) => [el("span", "", "Buyer"), demoPill(r.source)]) }, { field: "message", headerName: "Buyer message", flex: 2, minWidth: 220, wrapText: true, autoHeight: true, tooltipField: "message" },
       { field: "intent", headerName: "Intent", width: 140, valueFormatter: (p) => INTENTS[p.value] || p.value },
       { field: "outcome", headerName: "Outcome", width: 150, cellRenderer: (p) => pill(pretty(p.value), OUTCOMES[p.value]) },
       { field: "flagged", headerName: "Flag", width: 100, sortable: false, filter: false, cellRenderer: (p) => (p.value ? pill("Flagged", "p-warn") : "") }, { headerName: "Refund", width: 170, sortable: false, filter: false, cellRenderer: refundCell }],

@@ -1,4 +1,6 @@
 /* AG Grid tables for the seller dashboard (helpers come from dashboard.js) */
+// a cell that starts with = + - @ (or a tab or return) would run as a formula in a spreadsheet, so it is written with a leading quote
+const csvSafe = (v) => (["=", "+", "-", "@", "\t", "\r"].includes(String(v == null ? "" : v).charAt(0)) ? "'" + v : v);
 const Grids = (() => {
   const grids = {};
   const seen = {};
@@ -86,5 +88,5 @@ const Grids = (() => {
     Object.keys(grids).forEach((name) => { track(name); grids[name].setGridOption("rowData", data[name]); });
   }
 
-  return { make, refresh, filter: (n, text) => grids[n] && grids[n].setGridOption("quickFilterText", text), csv: (n) => grids[n] && grids[n].exportDataAsCsv({ fileName: "accessproof-" + n + ".csv", processCellCallback: (p) => (["=", "+", "-", "@", "\t", "\r"].includes(String(p.value == null ? "" : p.value).charAt(0)) ? "'" + p.value : p.value) }) };
+  return { make, refresh, filter: (n, text) => grids[n] && grids[n].setGridOption("quickFilterText", text), csv: (n) => grids[n] && grids[n].exportDataAsCsv({ fileName: "accessproof-" + n + ".csv", processCellCallback: (p) => csvSafe(p.value) }) };
 })();

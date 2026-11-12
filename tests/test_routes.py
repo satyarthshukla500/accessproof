@@ -441,3 +441,33 @@ def test_every_static_script_parses():
     for path in glob.glob(os.path.join(root, "static", "*.js")):
         done = subprocess.run([node, "--check", path], capture_output=True, text=True)
         assert done.returncode == 0, path + "\n" + done.stderr[:300]
+
+
+def test_csv_export_neutralises_formula_cells():
+    import re
+    import shutil
+    import subprocess
+    node = shutil.which("node")
+    if not node:
+        pytest.skip("node is not installed")
+    root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+    src = open(os.path.join(root, "static", "grids.js"), encoding="utf-8").read()
+    fn = re.search(r"^const csvSafe = .*;$", src, re.M).group(0)
+    script = fn + '; console.log(JSON.stringify(["=HYPERLINK(1)", "+1", "-1", "@SUM(A1)", "\tx", "plain", 29, null].map(csvSafe)))'
+    out = subprocess.run([node, "-e", script], capture_output=True, text=True).stdout
+    assert json.loads(out) == ["'=HYPERLINK(1)", "'+1", "'-1", "'@SUM(A1)", "'\tx", "plain", 29, None]
+
+
+@pytest.mark.parametrize("unit_ref,currency", [("other-product", "USD"), ("notion-kit", "EUR")])
+def test_capture_of_another_product_or_currency_is_refused(ctx, monkeypatch, unit_ref, currency):
+    appmod, c = ctx
+    bad = {"payer": CAPTURE["payer"], "purchase_units": [{"reference_id": unit_ref, "payments": {"captures": [
+        {"id": "CAPX", "status": "COMPLETED", "amount": {"value": "29.00", "currency_code": currency}}]}}]}
+    monkeypatch.setattr(paypal, "capture_order", lambda i: bad)
+    assert c.post("/api/orders/ORD1/capture").status_code == 400 and db.one("SELECT id FROM orders WHERE id='ORD1'") is None
+
+
+def test_an_old_order_cannot_download_even_with_a_fresh_token(ctx):
+    appmod, c = ctx
+    order("OLD2", age="8 day")
+    assert c.get("/d/" + appmod.sign("OLD2")).status_code == 403

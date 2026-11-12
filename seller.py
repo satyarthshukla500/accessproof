@@ -136,7 +136,7 @@ def sync():
     except (paypal.PayPalError, KeyError):
         log.exception("dispute sync failed")
         return reply(False, "Could not reach PayPal disputes", 502)
-    return reply(True, "Synced %d dispute(s) from PayPal" % len(items))
+    return reply(True, "Synced %d dispute%s from PayPal" % (len(items), "" if len(items) == 1 else "s"))
 
 
 @bp.post("/seller/disputes/sample")
@@ -170,7 +170,7 @@ def pack(dispute_id):
     res = assistant.evidence_pack(d, ledger.rows(order["id"]))
     db.run("UPDATE disputes SET pack=?, covered=?, recommendation=? WHERE id=?",
            (json.dumps(res), int(res["covered"]), res["recommendation"], dispute_id))
-    return reply(True, "Evidence pack built: %s" % res["recommendation"])
+    return reply(True, "Evidence pack built: %s" % {"SUBMIT_EVIDENCE": "ready to submit", "MAKE_OFFER": "better to make an offer", "ACCEPT": "better to accept the claim"}[res["recommendation"]])
 
 
 @bp.get("/seller/disputes/<dispute_id>/pdf")
